@@ -67,5 +67,3 @@ The document must include the following sections.
 
 11. API and event contract
     List WebSocket events with payload examples. Show how frontend and backend communicate.
-
-If you want, I can also generate a second version that forces Gemini to output **actual starter code** for NestJS WebSocket gateway and Next.js client hooks.
