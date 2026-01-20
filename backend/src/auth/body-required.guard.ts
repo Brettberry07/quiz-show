@@ -5,7 +5,6 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { Request } from "express";
-import { CreateUserDto } from "src/dto/CreateUser.dto";
 import { loginUserDto } from "src/dto/loginUser.dto";
 
 @Injectable()
@@ -48,32 +47,16 @@ export class BodyRequiredGuard implements CanActivate {
       typeof v === "object" &&
       v !== null &&
       "username" in v &&
-      typeof (v as { username?: unknown }).username === "string" &&
-      "password" in v &&
-      typeof (v as { password?: unknown }).password === "string";
-    const isCreateUserDto = (v: unknown): v is CreateUserDto =>
-      typeof v === "object" &&
-      v !== null &&
-      "username" in v &&
-      typeof (v as { username?: unknown }).username === "string" &&
-      "password" in v &&
-      typeof (v as { password?: unknown }).password === "string";
+      typeof (v as { username?: unknown }).username === "string"
 
     if (routePath?.includes("login")) {
       if (!isLoginDto(body)) {
         throw new BadRequestException("username and password are required");
       }
-      if (!body.username || !body.password) {
+      if (!body.username) {
         throw new BadRequestException("username and password are required");
       }
-    } else if (routePath?.includes("register")) {
-      if (!isCreateUserDto(body)) {
-        throw new BadRequestException("username and password are required");
-      }
-      if (!body.username || !body.password) {
-        throw new BadRequestException("username and password are required");
-      }
-    }
+    } 
 
     return true;
   }

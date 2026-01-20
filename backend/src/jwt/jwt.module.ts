@@ -35,7 +35,7 @@ import { JwtService } from "./jwt.service";
           secret,
           signOptions: {
             algorithm: "HS256",
-            expiresIn: accessExp,
+            expiresIn: parseInt(accessExp, 10),
           },
         };
       },

@@ -1,22 +1,15 @@
-import { Entity, Column, PrimaryGeneratedColumn, Generated } from "typeorm";
+import { Entity, Column, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class User {
-  @PrimaryGeneratedColumn()
-  @Generated("uuid")
-  id: string | undefined;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ unique: true })
   username: string;
 
   @Column()
   createdAt: Date;
-
-  @Column()
-  password: string;
-
-  @Column({ default: "user" })
-  role: string;
 
   @Column({ nullable: true })
   refreshTokenHash: string;

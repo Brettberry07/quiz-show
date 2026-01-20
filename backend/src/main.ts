@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import * as os from 'os';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
@@ -24,7 +25,26 @@ async function bootstrap() {
 		port,
 		'0.0.0.0',
 	);
+
+    const networkInterfaces = os.networkInterfaces();
+    const urls: string[] = [];
+    
+    for (const interfaceName in networkInterfaces) {
+        const interfaces = networkInterfaces[interfaceName];
+        if (interfaces) {
+            for (const iface of interfaces) {
+                 if (iface.family === 'IPv4' && !iface.internal) {
+                    urls.push(`http://${iface.address}:${port}`);
+                 }
+            }
+        }
+    }
+
 	console.log(`Server running on http://0.0.0.0:${port}`);
+    if (urls.length > 0) {
+        console.log(`Network URLs:`);
+        urls.forEach(url => console.log(` - ${url}`));
+    }
 }
 
 /* 

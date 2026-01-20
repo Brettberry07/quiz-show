@@ -1,8 +1,5 @@
-import { RolesModule } from "./roles/roles.module";
 import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
 import { UsersModule } from "./users/users.module";
-import { User } from "./entities/user.entity";
 import { AuthModule } from "./auth/auth.module";
 import { JwtModule } from "./jwt/jwt.module";
 import { DbModule } from "./db/db.module";
@@ -15,13 +12,6 @@ import { ConfigModule } from "@nestjs/config";
  */
 @Module({
   imports: [
-    RolesModule,
-    TypeOrmModule.forRoot({
-      type: "sqlite",
-      database: "../database.db", // Use repo root database for compatibility
-      entities: [User],
-      synchronize: true,
-    }),
     ConfigModule.forRoot({
       isGlobal: true,
       // Allow dynamic resolution: prefer process.env already injected by Docker, fallback to file

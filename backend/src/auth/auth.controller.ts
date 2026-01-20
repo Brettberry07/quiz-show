@@ -13,7 +13,6 @@ import { AuthService } from "./auth.service";
 import { BodyRequiredGuard } from "./body-required.guard";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { RefreshUserTokensDto } from "../dto/refreshUserTokens.dto";
-import { CreateUserDto } from "../dto/CreateUser.dto";
 import { loginUserDto } from "../dto/loginUser.dto";
 
 interface AuthenticatedRequest {
@@ -35,7 +34,7 @@ export class AuthController {
   @Get()
   getRoot() {
     return {
-      message: "Ignite Chat API",
+      message: "QuizSink API",
       status: "healthy",
       version: "1.0.0",
     };
@@ -66,20 +65,6 @@ export class AuthController {
       token_type: "bearer",
       user_id: result.userID,
       message: result.message,
-    };
-  }
-
-  @Post("register")
-  @UseGuards(BodyRequiredGuard) // Checks input before hitting route
-  async register(@Body() createUserDto: CreateUserDto) {
-    const user = await this.authService.register(createUserDto);
-    return {
-      message: "User created successfully",
-      status: 201,
-      access_token: user.accessToken,
-      refresh_token: user.refreshToken,
-      token_type: "bearer",
-      user_id: user.userID,
     };
   }
 

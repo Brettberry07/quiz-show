@@ -1,4 +1,5 @@
 // You can ignore these, eslint has a seizure when it sees good code
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Injectable } from "@nestjs/common";
@@ -8,7 +9,6 @@ import * as bcrypt from "bcrypt";
 
 export interface JwtPayload {
   sub: string; // userId
-  role: string; // user role/permissions
 }
 
 @Injectable()
@@ -22,8 +22,8 @@ export class JwtService {
   generateAccessToken(payload: JwtPayload): Promise<string> {
     return this.jwtService.signAsync(payload, {
       secret: this.configService.get<string>("JWT_SECRET"), // Use symmetric secret
-      algorithm: "HS256", // Switch to HS256
-      expiresIn: this.configService.get<string>("JWT_ACCESS_EXP", "15m"),
+      algorithm: "HS256",
+      expiresIn: this.configService.get<string>("JWT_ACCESS_EXP", "15m") as any,
     });
   }
 
@@ -31,8 +31,8 @@ export class JwtService {
   generateRefreshToken(payload: JwtPayload): Promise<string> {
     return this.jwtService.signAsync(payload, {
       secret: this.configService.get<string>("JWT_SECRET"), // Use symmetric secret
-      algorithm: "HS256", // Switch to HS256
-      expiresIn: this.configService.get<string>("JWT_REFRESH_EXP", "7d"),
+      algorithm: "HS256",
+      expiresIn: this.configService.get<string>("JWT_REFRESH_EXP", "7d") as any,
     });
   }
 
@@ -75,8 +75,8 @@ export class JwtService {
   }
 
   // ----- TOKEN ROTATION -----
-  async rotateTokens(userId: string, role: string) {
-    const payload: JwtPayload = { sub: userId, role };
+  async rotateTokens(userId: string) {
+    const payload: JwtPayload = { sub: userId };
 
     const accessToken = await this.generateAccessToken(payload);
     const refreshToken = await this.generateRefreshToken(payload);

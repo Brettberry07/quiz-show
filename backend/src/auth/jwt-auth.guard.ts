@@ -14,8 +14,6 @@ interface RequestWithUser {
   user?: {
     id: string;
     username: string;
-    role: string;
-    roles: string[];
   };
 }
 
@@ -60,10 +58,8 @@ export class JwtAuthGuard implements CanActivate {
 
       // Attach user info to request, including roles array for compatibility with RolesGuard
       request.user = {
-        id: user.id!,
+        id: user.id,
         username: user.username,
-        role: user.role,
-        roles: [user.role], // Convert single role to array for RolesGuard compatibility
       };
 
       return true;
