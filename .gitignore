@@ -2,6 +2,9 @@
 
 # dependencies
 /node_modules
+frontend/node_modules
+frontend/.next
+
 package-lock.json
 /.pnp
 .pnp.*
