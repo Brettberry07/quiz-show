@@ -3,6 +3,7 @@ import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { JwtModule } from "./jwt/jwt.module";
 import { DbModule } from "./db/db.module";
+import { GameModule } from "./game/game.module";
 import { ConfigModule } from "@nestjs/config";
 
 /** DO NOT DELETE
@@ -23,6 +24,7 @@ import { ConfigModule } from "@nestjs/config";
     UsersModule,
     AuthModule,
     JwtModule,
+    GameModule,
     DbModule,
   ],
 })
