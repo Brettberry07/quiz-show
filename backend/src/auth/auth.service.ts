@@ -5,7 +5,7 @@ import {
 	UnauthorizedException,
 } from '@nestjs/common';
 
-import { DbService } from '../db/db.service'; // Should prob move into own db file later
+import { DbService } from '../db/db.service';
 import { JwtService } from '../jwt/jwt.service';
 
 import { loginUserDto } from 'src/dto/loginUser.dto';
