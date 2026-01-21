@@ -1,4 +1,4 @@
-// You can ignore these, eslint has a seizure when it sees good code
+// You can ignore these, eslint has a seizure when it sees good code (brcrypt types are incorrectly defined)
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
@@ -8,7 +8,7 @@ import { ConfigService } from "@nestjs/config";
 import * as bcrypt from "bcrypt";
 
 export interface JwtPayload {
-  sub: string; // userId
+  sub: string; // Subject: user ID
 }
 
 @Injectable()

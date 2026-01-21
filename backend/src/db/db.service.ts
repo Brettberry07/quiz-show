@@ -1,8 +1,4 @@
-import {
-	ConflictException,
-	Injectable,
-	UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm/dist/common/typeorm.decorators';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
@@ -20,15 +16,6 @@ export class DbService {
 	}
 
 	async create(user: Partial<User>): Promise<User | undefined> {
-		// Check for existing user by username
-		if (user.username) {
-			const existingUserByUsername = await this.findOne(undefined, user.username);
-			
-			if (existingUserByUsername) {
-				throw new ConflictException('User already exists');
-			}
-		}
-		
 		const newUser = this.userRepository.create(user);
 		return await this.userRepository.save(newUser);
 	}
@@ -54,11 +41,7 @@ export class DbService {
 		return user;
 	}
 	
-	async SaveRefreshToken(userId: string, refreshTokenHash: string): Promise<void> {
-		let user: User | null;
-		if (!(user = await this.findOne(userId, undefined))) {
-			throw new UnauthorizedException();
-		}
+	async SaveRefreshToken(user: User, refreshTokenHash: string): Promise<void> {
 		user.refreshTokenHash = refreshTokenHash;
 		await this.userRepository.save(user);
 	}

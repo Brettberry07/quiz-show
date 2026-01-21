@@ -5,7 +5,7 @@ import {
 	UnauthorizedException,
 } from '@nestjs/common';
 
-import { DbService } from '../db/db.service'; // Should prob move into own db file later
+import { DbService } from '../db/db.service';
 import { JwtService } from '../jwt/jwt.service';
 
 import { loginUserDto } from 'src/dto/loginUser.dto';
@@ -43,11 +43,11 @@ export class AuthService {
 			return this.register(loginUserDto);
 		}
 
-		console.log('User found:', user);
+		// console.log('User found:', user);
 		if(!user.id) return Promise.reject(new BadRequestException('User not found'));
 		const tokens = await this.jwtService.rotateTokens(user.id);
 
-		await this.dbService.SaveRefreshToken(user.id, tokens.refreshTokenHash);
+		await this.dbService.SaveRefreshToken(user, tokens.refreshTokenHash);
 		return {
 			message: 'User logged in successfully',
 			userID: user.id,
@@ -81,7 +81,7 @@ export class AuthService {
 			// console.log(user);
 			if (!user || !user.id) return Promise.reject(new InternalServerErrorException('Error creating new user'));
 			const { accessToken, refreshToken, refreshTokenHash } = await this.jwtService.rotateTokens(user.id);
-			await this.dbService.SaveRefreshToken(user.id, refreshTokenHash);
+			await this.dbService.SaveRefreshToken(user, refreshTokenHash);
 
 			return {
 				message: 'User registered successfully',
@@ -130,7 +130,7 @@ export class AuthService {
 
 		const { accessToken, refreshToken: newRefreshToken, refreshTokenHash } = await this.jwtService.rotateTokens(user.id);
 
-		await this.dbService.SaveRefreshToken(user.id, refreshTokenHash);
+		await this.dbService.SaveRefreshToken(user, refreshTokenHash);
 
 		return {
 			message: 'Token refreshed successfully',

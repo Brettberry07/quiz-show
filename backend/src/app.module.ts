@@ -3,7 +3,10 @@ import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { JwtModule } from "./jwt/jwt.module";
 import { DbModule } from "./db/db.module";
+import { GameModule } from "./game/game.module";
 import { ConfigModule } from "@nestjs/config";
+// import { WebsocketModule } from './websocket/websocket.module';
+import { QuizModule } from "./quiz/quiz.module";
 
 /** DO NOT DELETE
  * app.module is the master module that imports all other modules
@@ -23,7 +26,10 @@ import { ConfigModule } from "@nestjs/config";
     UsersModule,
     AuthModule,
     JwtModule,
+    GameModule,
     DbModule,
+    // WebsocketModule,
+    QuizModule
   ],
 })
 export class AppModule {}

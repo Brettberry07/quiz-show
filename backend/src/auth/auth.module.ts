@@ -9,6 +9,6 @@ import { JwtModule } from "../jwt/jwt.module";
   imports: [DbModule, forwardRef(() => JwtModule)],
   controllers: [AuthController],
   providers: [AuthService, JwtAuthGuard],
-  exports: [AuthService, JwtAuthGuard],
+  exports: [AuthService, JwtAuthGuard, JwtModule, DbModule], // Export modules so JwtAuthGuard dependencies are available
 })
 export class AuthModule {}

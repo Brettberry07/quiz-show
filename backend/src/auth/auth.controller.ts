@@ -41,7 +41,8 @@ export class AuthController {
   }
 
   /**
-   * Handles user login authentication
+   * Handles user login authentication, if user is not already registered, automatically create a new user.
+   *
    * @param loginUserDto - The login credentials containing username and password
    * @returns Promise resolving to authentication result with user data and token on success,
    *          or error response with status 400 if credentials are missing/invalid
@@ -51,7 +52,6 @@ export class AuthController {
    * POST /login
    * {
    *   "username": "cam",
-   *   "password": "123456"
    * }
    * ```
    */
@@ -68,6 +68,13 @@ export class AuthController {
     };
   }
 
+
+  /**
+   * Refreshes authentication tokens using a provided refresh token.
+   *
+   * @param refreshTokenDto - DTO containing the refresh token used to obtain new tokens.
+   * @returns An object containing the new access token, refresh token, token type, and a status message.
+   */
   @Patch("auth/refresh")
   @UseGuards(BodyRequiredGuard)
   async refresh(@Body() refreshTokenDto: RefreshUserTokensDto) {
