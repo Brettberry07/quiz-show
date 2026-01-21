@@ -1,74 +1,165 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Droplets, Settings, Music, User } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Droplets, User, Waves, Hand } from "lucide-react";
 import Link from 'next/link';
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import { useState, useEffect } from "react";
 
 export default function HostGamePage() {
   const router = useRouter();
+  const [gameState, setGameState] = useState<'reading' | 'answering'>('reading');
+  const [timeLeft, setTimeLeft] = useState(10);
 
-  const handleQuestionClick = () => {
+  // Initial sequence: Read question (5s) -> Answer phase (starts timer)
+  useEffect(() => {
+    if (gameState === 'reading') {
+        const timer = setTimeout(() => {
+            setGameState('answering');
+        }, 5000); // 5 seconds to read
+        return () => clearTimeout(timer);
+    }
+  }, [gameState]);
+
+  // Timer logic - only runs during 'answering'
+  useEffect(() => {
+    if (gameState === 'answering' && timeLeft > 0) {
+        const timer = setInterval(() => {
+            setTimeLeft((prev) => prev - 1);
+        }, 1000);
+        return () => clearInterval(timer);
+    }
+    // Auto-advance when time is up
+    if (timeLeft === 0) {
+        router.push("/host/winner");
+    }
+  }, [gameState, timeLeft, router]);
+
+  const handleManualNext = () => {
     router.push("/host/winner");
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f1f1f1] text-[#111] flex flex-col">
+    <div className="min-h-screen w-full bg-[#f1f1f1] text-[#111] flex flex-col overflow-hidden">
        {/* Host Header */}
-       <div className="bg-[#7a7a7a] text-white shadow-md relative overflow-hidden h-20 shrink-0">
-                <div className="max-w-7xl mx-auto flex items-center justify-between h-full px-6 relative z-10">
-                     <div className="flex items-center gap-4">
-                        <Link href="/home">
-                            <div className="flex items-center gap-2 text-white/90 hover:text-white transition-colors">
-                                <Droplets className="h-8 w-8" />
-                                <span className="text-xl font-black tracking-tight">QuizSink</span>
-                            </div>
-                        </Link>
-                    </div>
-
-                    <div className="flex flex-col items-center">
-                        <span className="text-xs font-bold uppercase tracking-widest text-white/70">Question 1 of 12</span>
-                    </div>
-                     
+       <div className="bg-[#7a7a7a] text-white shadow-md relative overflow-hidden h-20 shrink-0 z-20">
+            <div className="max-w-7xl mx-auto flex items-center justify-between h-full px-6 relative z-10">
                     <div className="flex items-center gap-4">
-                        <div className="bg-black/20 px-4 py-2 rounded-lg flex items-center gap-2">
-                            <User className="w-5 h-5" />
-                            <span className="font-bold">8</span>
+                    <Link href="/home">
+                        <div className="flex items-center gap-2 text-white/90 hover:text-white transition-colors">
+                            <Droplets className="h-8 w-8" />
+                            <span className="text-xl font-black tracking-tight">QuizSink</span>
                         </div>
-                    </div>
+                    </Link>
                 </div>
+
+                <div className="flex flex-col items-center">
+                    <span className="text-xs font-bold uppercase tracking-widest text-white/70">Question 1 of 12</span>
+                </div>
+                    
+                <div className="flex items-center gap-4">
+                    <div className="bg-black/20 px-4 py-2 rounded-lg flex items-center gap-2">
+                        <User className="w-5 h-5" />
+                        <span className="font-bold">8</span>
+                    </div>
+                    <button onClick={handleManualNext} className="ml-4 text-xs bg-white/10 px-2 py-1 rounded hover:bg-white/20">
+                        Skip
+                    </button>
+                </div>
+            </div>
+            {/* Countdown Bar */}
+             {gameState === 'reading' && (
+                 <motion.div 
+                    initial={{ width: "0%" }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 5, ease: "linear" }}
+                    className="absolute bottom-0 left-0 h-1 bg-white/50"
+                 />
+             )}
         </div>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-8 gap-8">
+      <main className="flex-1 flex flex-col items-center justify-between px-6 py-8 relative">
         
-        {/* Question Card */}
-        <motion.div
-          onClick={handleQuestionClick}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, type: "spring" }}
-          className="w-full max-w-5xl bg-white shadow-2xl rounded-3xl p-12 min-h-[400px] flex items-center justify-center text-center cursor-pointer hover:scale-[1.01] transition-transform active:scale-[0.99] group"
-        >
-            <div className="space-y-6">
-                <span className="inline-block px-4 py-1 bg-black text-white text-sm font-bold uppercase tracking-widest rounded-full mb-4">
-                    General Knowledge
-                </span>
-                <h1 className="text-5xl md:text-7xl font-black tracking-tight text-[#1a1a1a] leading-tight group-hover:text-black">
-                    What is the capital of France?
-                </h1>
-            </div>
-        </motion.div>
+        {/* Question Card - Moves up when options appear */}
+        <div className="flex-1 w-full flex items-center justify-center transition-all duration-500">
+             <motion.div
+                layout
+                className={`w-full max-w-5xl bg-white shadow-2xl rounded-3xl flex items-center justify-center text-center p-8 transition-all duration-500 ${gameState === 'answering' ? 'min-h-[250px] scale-90 mb-4' : 'min-h-[400px]'}`}
+                >
+                <div className="space-y-6">
+                    <span className="inline-block px-4 py-1 bg-black text-white text-sm font-bold uppercase tracking-widest rounded-full mb-4">
+                        General Knowledge
+                    </span>
+                    <h1 className={`${gameState === 'answering' ? 'text-4xl' : 'text-5xl md:text-7xl'} font-black tracking-tight text-[#1a1a1a] leading-tight transition-all duration-500`}>
+                        What is the capital of France?
+                    </h1>
+                </div>
+            </motion.div>
+        </div>
 
-        {/* Floating Controls / Timer (Visual only) */}
-        <div className="flex items-center gap-8">
-            <div className="w-20 h-20 rounded-full bg-[#333] border-8 border-[#ccc] flex items-center justify-center shadow-lg">
-                <span className="text-3xl font-black text-white">20</span>
-            </div>
+        {/* Answer Options - Only revealed in 'answering' state */}
+        <AnimatePresence>
+            {gameState === 'answering' && (
+                 <motion.div 
+                    initial={{ y: 200, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: 200, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="w-full max-w-7xl grid grid-cols-2 gap-4 h-64"
+                 >
+                    <AnswerCard 
+                        icon={<Waves className="w-12 h-12 fill-current" />} 
+                        label="London" 
+                        color="bg-[#a3a3a3]" // Gray
+                    />
+                    <AnswerCard 
+                        icon={<div className="w-12 h-12 rounded-full border-8 border-current" />} 
+                        label="Berlin" 
+                        color="bg-[#a3a3a3]" 
+                    />
+                    <AnswerCard 
+                        icon={<Hand className="w-12 h-12 fill-current" />} 
+                        label="Paris" 
+                        color="bg-[#a3a3a3]"
+                        isCorrect // Metadata for later
+                    />
+                    <AnswerCard 
+                        icon={<svg className="w-12 h-12 fill-current" viewBox="0 0 64 64" fill="currentColor"><path d="M50 16h-8v-4a6 6 0 00-12 0v4H18a6 6 0 00-6 6v4a6 6 0 006 6h2v18a6 6 0 006 6h12a6 6 0 006-6V32h2a6 6 0 006-6v-4a6 6 0 00-6-6zm-20-4a2 2 0 114 0v4h-4v-4zm18 14a2 2 0 01-2 2h-4v20a2 2 0 01-2 2H28a2 2 0 01-2-2V28h-4a2 2 0 01-2-2v-4a2 2 0 012-2h24a2 2 0 012 2v4z" /></svg>} 
+                        label="Madrid" 
+                        color="bg-[#a3a3a3]" 
+                    />
+                 </motion.div>
+            )}
+        </AnimatePresence>
+
+        {/* Timer - Only active in 'answering' state */}
+        <div className="absolute left-8 bottom-8 md:scale-125 origin-bottom-left">
+            {gameState === 'answering' && (
+                 <motion.div 
+                    initial={{ scale: 0 }} 
+                    animate={{ scale: 1 }}
+                    className="w-24 h-24 rounded-full bg-[#333] border-8 border-[#ccc] flex items-center justify-center shadow-lg"
+                >
+                    <span className={`text-4xl font-black ${timeLeft <= 5 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                        {timeLeft}
+                    </span>
+                </motion.div>
+            )}
         </div>
         
       </main>
     </div>
   );
+}
+
+function AnswerCard({ icon, label, color, isCorrect }: { icon: React.ReactNode, label: string, color: string, isCorrect?: boolean }) {
+    return (
+        <div className={`${color} rounded-xl shadow-md p-6 flex items-center gap-6 text-black`}>
+            <div className="flex-shrink-0 opacity-50">
+                {icon}
+            </div>
+            <span className="text-3xl font-bold truncate">{label}</span>
+        </div>
+    )
 }
