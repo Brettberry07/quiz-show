@@ -1,6 +1,37 @@
-import { IsString, IsOptional, IsArray, ValidateNested, IsEnum, IsNumber, Min, IsInt, ArrayMinSize, IsNotEmpty } from "class-validator";
+import { IsString, IsOptional, IsArray, ValidateNested, IsEnum, IsNumber, Min, IsInt, ArrayMinSize, IsNotEmpty, registerDecorator, ValidationOptions, ValidationArguments } from "class-validator";
 import { Type } from "class-transformer";
 import { QuestionType } from "../../game/game.types";
+
+/**
+ * Custom validator to ensure correctOptionIndex is within bounds of options array
+ */
+function IsValidOptionIndex(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'isValidOptionIndex',
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      validator: {
+        validate(value: any, args: ValidationArguments) {
+          const obj = args.object as any;
+          if (value === undefined || value === null) {
+            return true; // Let @IsOptional handle this
+          }
+          if (!obj.options || !Array.isArray(obj.options)) {
+            return false;
+          }
+          return typeof value === 'number' && value >= 0 && value < obj.options.length;
+        },
+        defaultMessage(args: ValidationArguments) {
+          const obj = args.object as any;
+          const optionsLength = obj.options?.length || 0;
+          return `Correct option index must be between 0 and ${optionsLength - 1}`;
+        }
+      }
+    });
+  };
+}
 
 /**
  * DTO for updating a question
@@ -36,6 +67,7 @@ export class UpdateQuestionDto {
 
   @IsInt({ message: "Correct option index must be an integer" })
   @Min(0, { message: "Correct option index must be non-negative" })
+  @IsValidOptionIndex({ message: "Correct option index must be within the bounds of the options array" })
   @IsOptional()
   correctOptionIndex?: number;
 }
@@ -66,6 +98,7 @@ export class AddQuestionDto {
 
   @IsInt({ message: "Correct option index must be an integer" })
   @Min(0, { message: "Correct option index must be non-negative" })
+  @IsValidOptionIndex({ message: "Correct option index must be within the bounds of the options array" })
   correctOptionIndex: number;
 }
 
