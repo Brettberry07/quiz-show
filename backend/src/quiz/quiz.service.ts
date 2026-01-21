@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { CreateQuizDto, CreateQuestionDto } from './dto/create-quiz.dto';
 import { UpdateQuizDto, UpdateQuestionDto } from './dto/update-quiz.dto';
@@ -9,6 +7,7 @@ import { CachedQuiz } from '../game/game.types';
 
 @Injectable()
 export class QuizService {
+  private readonly logger = new Logger(QuizService.name);
   // <PIN, Quiz> for quiz storage
   private readonly quizzes = new Map<string, Quiz>();
 
@@ -210,6 +209,26 @@ export class QuizService {
 
     const question = this.createQuestionFromDto(addQuestionDto, quizId);
     quiz.addQuestion(question);
+    
+    return question;
+  }
+
+  /**
+   * Add a new question to an existing quiz for a game player
+   * This bypasses ownership checks as it's for game contributions
+   * 
+   * @param quizId - The quiz ID
+   * @param addQuestionDto - The question data
+   * @param contributorId - The user ID of the player contributing
+   * @returns The created Question object
+   */
+  addQuestionForGamePlayer(quizId: string, addQuestionDto: CreateQuestionDto, contributorId: string): Question {
+    const quiz = this.findOne(quizId);
+    
+    const question = this.createQuestionFromDto(addQuestionDto, quizId);
+    quiz.addQuestion(question);
+    
+    this.logger.log(`Player ${contributorId} contributed a question to quiz ${quizId}`);
     
     return question;
   }

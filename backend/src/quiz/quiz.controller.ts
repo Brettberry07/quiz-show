@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { QuizService } from './quiz.service';
+import { GameService } from '../game/game.service';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { UpdateQuizDto, AddQuestionDto } from './dto/update-quiz.dto';
 
@@ -27,7 +28,10 @@ interface AuthenticatedRequest {
 @Controller('quiz')
 @UseGuards(JwtAuthGuard)
 export class QuizController {
-    constructor(private readonly quizService: QuizService) {}
+    constructor(
+        private readonly quizService: QuizService,
+        private readonly gameService: GameService,
+    ) {}
 
     /**
      * Create a new quiz
@@ -189,6 +193,34 @@ export class QuizController {
         const question = this.quizService.addQuestion(id, addQuestionDto, req.user.id);
         return {
             message: 'Question added successfully',
+            status: HttpStatus.CREATED,
+            data: question.getSafeQuestion(),
+        };
+    }
+
+    /**
+     * Add a question to a game's quiz (for players in a game lobby)
+     * Players can contribute ONE question before the game starts
+     * 
+     * @param pin - The game PIN
+     * @param addQuestionDto - The question data
+     * @param req - The authenticated request
+     * @returns The created question
+     */
+    @Post('game/:pin/questions')
+    addQuestionToGame(
+        @Param('pin') pin: string,
+        @Body() addQuestionDto: AddQuestionDto,
+        @Request() req: AuthenticatedRequest,
+    ) {
+        // Validate that the player can contribute (in game, hasn't contributed yet, game in lobby)
+        const quizId = this.gameService.validatePlayerQuestionContribution(pin, req.user.id);
+        
+        // Add the question to the quiz permanently
+        const question = this.quizService.addQuestionForGamePlayer(quizId, addQuestionDto, req.user.id);
+        
+        return {
+            message: 'Question contributed successfully to the game',
             status: HttpStatus.CREATED,
             data: question.getSafeQuestion(),
         };

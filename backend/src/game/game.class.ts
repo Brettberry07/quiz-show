@@ -76,6 +76,7 @@ export class Game {
 			totalScore: 0,
 			currentCombo: 0,
 			lastAnswer: null,
+			hasContributedQuestion: false,
 		};
 
 		this.players.set(userId, player);
@@ -160,6 +161,8 @@ export class Game {
 	private cacheCurrentSafeQuestion(): void {
 		const question = this.getCurrentQuestionInternal();
 		if (question) {
+			// Destructure to exclude correctOptionIndex
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			const { correctOptionIndex, ...safeQuestion } = question;
 			this.cachedSafeQuestion = safeQuestion;
 		} else {
@@ -439,6 +442,32 @@ export class Game {
 	 */
 	isHost(userId: string): boolean {
 		return this.hostUserId === userId;
+	}
+
+	/**
+	 * Mark that a player has contributed a question
+	 */
+	markPlayerQuestionContributed(userId: string): void {
+		const player = this.players.get(userId);
+		if (!player) {
+			throw new BadRequestException(`Player ${userId} not found in game`);
+		}
+		player.hasContributedQuestion = true;
+	}
+
+	/**
+	 * Check if player has already contributed a question
+	 */
+	hasPlayerContributedQuestion(userId: string): boolean {
+		const player = this.players.get(userId);
+		return player ? player.hasContributedQuestion : false;
+	}
+
+	/**
+	 * Get the quiz ID for this game
+	 */
+	getQuizId(): string {
+		return this.quizData.id;
 	}
 
 	/**

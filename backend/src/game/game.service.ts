@@ -10,6 +10,7 @@ import {
 	ScoreResult,
 	LeaderboardEntry,
 	CachedQuestion,
+	GameState,
 } from './game.types';
 import { Game } from './game.class';
 
@@ -290,5 +291,40 @@ export class GameService {
 			totalPlayers: this.playerGameMap.size,
 			games: Array.from(this.activeGames.values()).map(game => game.getSafeSummary()),
 		};
+	}
+
+	/**
+	 * Allow a player to contribute one question to a game's quiz (before game starts)
+	 * This marks the player as having contributed and returns the quiz ID for the QuizService to handle
+	 * 
+	 * @param pin - The game's PIN
+	 * @param userId - The player's user ID
+	 * @returns The quiz ID that the question should be added to
+	 * @throws BadRequestException if game has started, player not in game, or player already contributed
+	 */
+	validatePlayerQuestionContribution(pin: string, userId: string): string {
+		const game = this.getGame(pin);
+
+		// Ensure game is still in LOBBY
+		if (game.state !== GameState.LOBBY) {
+			throw new BadRequestException('Cannot add questions after game has started');
+		}
+
+		// Ensure player is in the game
+		const player = game.getPlayer(userId);
+		if (!player) {
+			throw new BadRequestException('You must join the game before adding a question');
+		}
+
+		// Ensure player hasn't already contributed
+		if (game.hasPlayerContributedQuestion(userId)) {
+			throw new BadRequestException('You have already contributed a question to this game');
+		}
+
+		// Mark player as contributed
+		game.markPlayerQuestionContributed(userId);
+
+		// Return quiz ID for QuizService to handle the actual addition
+		return game.getQuizId();
 	}
 }

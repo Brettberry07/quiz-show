@@ -58,6 +58,7 @@ export interface PlayerState {
 	totalScore: number;
 	currentCombo: number; // Consecutive correct answers
 	lastAnswer: PlayerAnswer | null; // Reset every question
+	hasContributedQuestion: boolean; // Track if player has added their one allowed question
 }
 
 /**
