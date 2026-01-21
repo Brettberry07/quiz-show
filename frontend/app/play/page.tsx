@@ -67,7 +67,7 @@ export default function PlayPage() {
                 className="text-center space-y-6 w-full max-w-md"
              >
                 <div className="space-y-2">
-                    <h1 className="text-4xl md:text-6xl font-black text-[#1a1a1a]">You're In!</h1>
+                    <h1 className="text-4xl md:text-6xl font-black text-[#1a1a1a]">You&apos;re In!</h1>
                     <p className="text-xl font-medium text-[#666]">See your nickname on screen</p>
                 </div>
 
@@ -132,7 +132,7 @@ export default function PlayPage() {
                     <motion.div 
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="bg-white p-8 rounded-2xl shadow-lg max-w-2xl w-full text-center min-h-[200px] flex items-center justify-center"
+                        className="bg-white p-8 rounded-2xl shadow-lg max-w-2xl w-full text-center min-h-50 flex items-center justify-center"
                     >
                         <h2 className="text-4xl font-black text-black">What is the capital of France?</h2>
                     </motion.div>

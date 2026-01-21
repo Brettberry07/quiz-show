@@ -85,7 +85,7 @@ export default function HostGamePage() {
         <div className="flex-1 w-full flex items-center justify-center transition-all duration-500">
              <motion.div
                 layout
-                className={`w-full max-w-5xl bg-white shadow-2xl rounded-3xl flex items-center justify-center text-center p-8 transition-all duration-500 ${gameState === 'answering' ? 'min-h-[250px] scale-90 mb-4' : 'min-h-[400px]'}`}
+                className={`w-full max-w-5xl bg-white shadow-2xl rounded-3xl flex items-center justify-center text-center p-8 transition-all duration-500 ${gameState === 'answering' ? 'min-h-62.5 scale-90 mb-4' : 'min-h-100'}`}
                 >
                 <div className="space-y-6">
                     <span className="inline-block px-4 py-1 bg-black text-white text-sm font-bold uppercase tracking-widest rounded-full mb-4">
@@ -153,10 +153,10 @@ export default function HostGamePage() {
   );
 }
 
-function AnswerCard({ icon, label, color, isCorrect }: { icon: React.ReactNode, label: string, color: string, isCorrect?: boolean }) {
+function AnswerCard({ icon, label, color }: { icon: React.ReactNode, label: string, color: string, isCorrect?: boolean }) {
     return (
         <div className={`${color} rounded-xl shadow-md p-6 flex items-center gap-6 text-black`}>
-            <div className="flex-shrink-0 opacity-50">
+            <div className="shrink-0 opacity-50">
                 {icon}
             </div>
             <span className="text-3xl font-bold truncate">{label}</span>
