@@ -45,6 +45,7 @@ export class UpdateQuestionDto {
  */
 export class AddQuestionDto {
   @IsString({ message: "Question text must be a string" })
+  @IsNotEmpty({ message: "Question text is required" })
   text: string;
 
   @IsEnum(QuestionType, { message: "Invalid question type" })
