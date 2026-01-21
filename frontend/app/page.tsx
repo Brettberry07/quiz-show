@@ -70,36 +70,6 @@ export default function Home() {
             </div>
           </Card>
         </motion.div>
-
-        {/* Answer Grid Preview */}
-        <motion.div
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-          className="pointer-events-none absolute bottom-10 right-10 hidden md:block"
-        >
-          <div className="grid grid-cols-2 gap-3 rounded-2xl bg-white p-3 shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
-            <div className="flex h-28 w-36 items-center justify-center rounded-2xl bg-[#9e9e9e]">
-              <Waves className="h-14 w-14 text-black" />
-            </div>
-            <div className="flex h-28 w-36 items-center justify-center rounded-2xl bg-[#9e9e9e]">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-black" />
-            </div>
-            <div className="flex h-28 w-36 items-center justify-center rounded-2xl bg-[#9e9e9e]">
-              <Hand className="h-14 w-14 text-black" />
-            </div>
-            <div className="flex h-28 w-36 items-center justify-center rounded-2xl bg-[#9e9e9e]">
-              <svg
-                className="h-16 w-16 text-black"
-                viewBox="0 0 64 64"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M50 16h-8v-4a6 6 0 00-12 0v4H18a6 6 0 00-6 6v4a6 6 0 006 6h2v18a6 6 0 006 6h12a6 6 0 006-6V32h2a6 6 0 006-6v-4a6 6 0 00-6-6zm-20-4a2 2 0 114 0v4h-4v-4zm18 14a2 2 0 01-2 2h-4v20a2 2 0 01-2 2H28a2 2 0 01-2-2V28h-4a2 2 0 01-2-2v-4a2 2 0 012-2h24a2 2 0 012 2v4z" />
-              </svg>
-            </div>
-          </div>
-        </motion.div>
       </main>
     </div>
   );
