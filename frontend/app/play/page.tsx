@@ -17,7 +17,7 @@ export default function PlayPage() {
           <motion.div 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white p-8 rounded-2xl shadow-lg max-w-2xl w-full text-center min-h-[200px] flex items-center justify-center"
+            className="bg-white p-8 rounded-2xl shadow-lg max-w-2xl w-full text-center min-h-50 flex items-center justify-center"
            >
               <h2 className="text-4xl font-black text-black">What is the capital of France?</h2>
           </motion.div>
@@ -67,7 +67,7 @@ function GameButton({ icon, color, delay }: { icon: React.ReactNode, color: stri
             transition={{ delay, type: "spring" }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.95 }}
-            className={`${color} rounded-xl shadow-[0_8px_0_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-[8px] transition-all flex items-center justify-center p-8 text-black`}
+            className={`${color} rounded-xl shadow-[0_8px_0_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-2 transition-all flex items-center justify-center p-8 text-black`}
         >
             {icon}
         </motion.button>
