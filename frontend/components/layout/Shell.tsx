@@ -26,7 +26,7 @@ export function Shell({ children }: ShellProps) {
         </div>
         
         <div className="flex items-center gap-4">
-            <Link href="/home" className={cn("px-4 py-2 bg-secondary/20 rounded-md font-bold hover:bg-secondary/40 transition", pathname === '/home' && "bg-white/20")}>
+            <Link href="/join" className={cn("px-4 py-2 bg-secondary/20 rounded-md font-bold hover:bg-secondary/40 transition", pathname === '/join' && "bg-white/20")}>
                 Join
             </Link>
             <Link href="/create" className={cn("px-4 py-2 bg-secondary/20 rounded-md font-bold hover:bg-secondary/40 transition", pathname.includes('/create') && "bg-white/20")}>
