@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import { Injectable } from "@nestjs/common";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService as NestJwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import * as bcrypt from "bcrypt";
@@ -63,9 +63,8 @@ export class JwtService {
         algorithms: ["HS256"],
       });
       return true;
-    } catch (error) {
-      console.error("Token verification error:", error);
-      return false;
+    } catch {
+      return Promise.reject(new UnauthorizedException("Invalid or expired token"));
     }
   }
 
