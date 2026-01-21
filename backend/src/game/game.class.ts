@@ -268,7 +268,11 @@ export class Game {
 
 		const elapsedSeconds = elapsedMs / 1000;
 		const timeRatio = 1 - (elapsedSeconds / question.timeLimitSeconds / 2);
-		const rawScore = Math.round(this.scoreConfig.basePoints * timeRatio);
+		const effectiveTimeRatio = Math.max(
+			timeRatio,
+			this.scoreConfig.minimumPointsRatio ?? 0
+		);
+		const rawScore = Math.round(this.scoreConfig.basePoints * effectiveTimeRatio);
 
 		const comboMultiplier = Math.min(
 			1 + (currentCombo * this.scoreConfig.comboBonus),
