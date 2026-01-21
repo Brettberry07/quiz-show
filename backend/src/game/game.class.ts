@@ -36,6 +36,7 @@ export class Game {
 	private questionTimer: NodeJS.Timeout | null;
 	private readonly players: Map<string, PlayerState>;
 	private readonly scoreConfig: ScoreConfig;
+	private cachedSafeQuestion: Omit<CachedQuestion, 'correctOptionIndex'> | null;
 
 	constructor(
 		pin: string,
@@ -57,6 +58,7 @@ export class Game {
 		this.players = new Map(); // Players in the Lobby
 		this.createdAt = new Date();
 		this.startedAt = null;
+		this.cachedSafeQuestion = null;
 	}
 
 	/**
@@ -141,6 +143,7 @@ export class Game {
 		this.currentQuestionIndex = 0;
 		this.state = GameState.QUESTION_ACTIVE;
 		this.questionStartTime = process.hrtime.bigint();
+		this.cacheCurrentSafeQuestion();
 
 		const currentQuestion = this.getCurrentQuestionInternal();
 		if (currentQuestion) {
@@ -148,6 +151,20 @@ export class Game {
 		}
 
 		this.logger.log(`Game ${this.pin} started with ${this.players.size} players`);
+	}
+
+	/**
+	 * Cache the current question without the correct answer
+	 * Called when a question becomes active
+	 */
+	private cacheCurrentSafeQuestion(): void {
+		const question = this.getCurrentQuestionInternal();
+		if (question) {
+			const { correctOptionIndex, ...safeQuestion } = question;
+			this.cachedSafeQuestion = safeQuestion;
+		} else {
+			this.cachedSafeQuestion = null;
+		}
 	}
 
 	/**
@@ -283,6 +300,7 @@ export class Game {
 
 		this.state = GameState.PROCESSING;
 		this.questionStartTime = null;
+		this.cachedSafeQuestion = null;
 
 		this.logger.log(`Question ${this.currentQuestionIndex} ended for game ${this.pin}`);
 	}
@@ -322,6 +340,7 @@ export class Game {
 		this.currentQuestionIndex++;
 		this.state = GameState.QUESTION_ACTIVE;
 		this.questionStartTime = process.hrtime.bigint();
+		this.cacheCurrentSafeQuestion();
 
 		const currentQuestion = this.getCurrentQuestionInternal();
 		if (currentQuestion) {
@@ -360,16 +379,10 @@ export class Game {
 
 	/**
 	 * Get current question without revealing the correct answer (for client display)
+	 * Returns cached version to avoid repeated object creation
 	 */
 	getCurrentQuestion(): Omit<CachedQuestion, 'correctOptionIndex'> | null {
-		if (this.currentQuestionIndex < 0 || this.currentQuestionIndex >= this.quizData.questions.length) {
-			return null;
-		}
-
-		const question = this.quizData.questions[this.currentQuestionIndex];
-		// Return question without correctOptionIndex to prevent client access
-		const { correctOptionIndex, ...safeQuestion } = question;
-		return safeQuestion;
+		return this.cachedSafeQuestion;
 	}
 
 	/**

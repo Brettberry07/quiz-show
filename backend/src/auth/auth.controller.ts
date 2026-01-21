@@ -51,7 +51,6 @@ export class AuthController {
    * POST /login
    * {
    *   "username": "cam",
-   *   "password": "123456"
    * }
    * ```
    */
