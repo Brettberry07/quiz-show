@@ -33,7 +33,7 @@ export default function WinnerPage() {
          <div className="flex items-end justify-center w-full max-w-4xl gap-4 md:gap-8 h-full pb-0">
             
             {/* 3rd Place (Left) */}
-            <div className="flex flex-col items-center w-1/4 max-w-[200px]">
+            <div className="flex flex-col items-center w-1/4 max-w-50">
                  <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -51,7 +51,7 @@ export default function WinnerPage() {
             </div>
 
             {/* 1st Place (Center) */}
-            <div className="flex flex-col items-center w-1/3 max-w-[240px] z-10">
+            <div className="flex flex-col items-center w-1/3 max-w-60 z-10">
                  <motion.div 
                     initial={{ opacity: 0, scale: 0, y: 50 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -81,7 +81,7 @@ export default function WinnerPage() {
             </div>
 
             {/* 2nd Place (Right) */}
-            <div className="flex flex-col items-center w-1/4 max-w-[200px]">
+            <div className="flex flex-col items-center w-1/4 max-w-50">
                  <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}

@@ -1,26 +1,42 @@
 "use client";
 
+import { Card } from "@/components/ui/Card";
 import { motion, AnimatePresence } from "framer-motion";
-import { Waves, Hand, Droplets } from "lucide-react";
+import { Waves, Hand, Droplets, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { QuestionBuilder, Question } from "@/components/QuestionBuilder";
+import { Button } from "@/components/ui/Button";
 
 export default function PlayPage() {
   const router = useRouter();
-  const [gameState, setGameState] = useState<'waiting' | 'playing'>('waiting');
+  const [gameState, setGameState] = useState<'waiting' | 'playing' | 'adding_question'>('waiting');
 
   useEffect(() => {
-    // Simulate waiting for host to start game
+    if (gameState !== 'waiting') return;
+    
+    // Simulate waiting for host to start game - Longer wait now to allow adding questions
     const timer = setTimeout(() => {
       setGameState('playing');
-    }, 3000); // 3 seconds wait
+    }, 10000); // 10 seconds wait
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [gameState]);
 
   const handleAnswer = () => {
     router.push("/host/winner");
+  };
+
+  const handleSuggestQuestion = () => {
+    setGameState('adding_question');
+  };
+
+  const handleQuestionAdded = (q: Question) => {
+    // In a real app, this would send the suggestion to the server
+    console.log("Suggestion added:", q);
+    alert("Thanks for your suggestion! The host might include it.");
+    setGameState('waiting');
   };
 
   return (
@@ -42,21 +58,69 @@ export default function PlayPage() {
 
        <div className="flex-1 flex flex-col items-center justify-center p-4">
         <AnimatePresence mode="wait">
-          {gameState === 'waiting' ? (
+          {gameState === 'waiting' && (
              <motion.div
                 key="waiting"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 1.1 }}
-                className="text-center space-y-6"
+                className="text-center space-y-6 w-full max-w-md"
              >
-                <h1 className="text-4xl md:text-6xl font-black text-[#1a1a1a]">You're In!</h1>
-                <p className="text-xl font-medium text-[#666]">See your nickname on screen</p>
-                <div className="flex justify-center mt-8">
+                <div className="space-y-2">
+                    <h1 className="text-4xl md:text-6xl font-black text-[#1a1a1a]">You&apos;re In!</h1>
+                    <p className="text-xl font-medium text-[#666]">See your nickname on screen</p>
+                </div>
+
+                <div className="flex justify-center py-4">
                      <div className="h-16 w-16 border-4 border-[#ccc] border-t-[#333] rounded-full animate-spin" />
                 </div>
+
+                <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1 }}
+                >
+                    <Card className="p-6 bg-white border-none shadow-lg">
+                        <h3 className="font-bold text-lg mb-2">Got a good question?</h3>
+                        <Button 
+                            onClick={handleSuggestQuestion}
+                            className="w-full bg-[#333] text-white hover:bg-black font-bold h-12"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Suggest a Question
+                        </Button>
+                    </Card>
+                </motion.div>
              </motion.div>
-          ) : (
+          )}
+
+          {gameState === 'adding_question' && (
+             <motion.div
+                key="adding"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="w-full max-w-2xl"
+             >
+                <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-2xl font-black">Suggest Question</h2>
+                    <Button 
+                        variant="ghost" 
+                        onClick={() => setGameState('waiting')}
+                        className="hover:bg-gray-200"
+                    >
+                        <X className="w-5 h-5" />
+                        Cancel
+                    </Button>
+                </div>
+                <QuestionBuilder 
+                    onAddQuestion={handleQuestionAdded}
+                    creatorName="Berrybr" // Hardcoded for simulation
+                />
+             </motion.div>
+          )}
+
+          {gameState === 'playing' && (
              <motion.div
                 key="question"
                 initial={{ opacity: 0 }}
@@ -68,7 +132,7 @@ export default function PlayPage() {
                     <motion.div 
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="bg-white p-8 rounded-2xl shadow-lg max-w-2xl w-full text-center min-h-[200px] flex items-center justify-center"
+                        className="bg-white p-8 rounded-2xl shadow-lg max-w-2xl w-full text-center min-h-50 flex items-center justify-center"
                     >
                         <h2 className="text-4xl font-black text-black">What is the capital of France?</h2>
                     </motion.div>

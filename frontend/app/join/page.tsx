@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { Droplets, ArrowRight } from "lucide-react";
+import { Droplets } from "lucide-react";
 import Link from 'next/link';
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -84,7 +84,7 @@ export default function JoinPage() {
                 <Button
                   type="submit"
                   disabled={loading || code.length < 7}
-                  className="h-14 w-full rounded-md border-b-4 border-[#111] bg-[#333] text-xl font-bold text-white hover:bg-[#222] hover:border-[#000] active:border-b-0 active:translate-y-1 transition-all disabled:opacity-70"
+                  className="h-14 w-full rounded-md border-b-4 border-[#111] bg-[#333] text-xl font-bold text-white hover:bg-[#222] hover:border-black active:border-b-0 active:translate-y-1 transition-all disabled:opacity-70"
                 >
                   <span className="flex items-center justify-center">
                     {loading ? "Joining..." : "Enter"}

@@ -73,7 +73,7 @@ export function QuestionBuilder({ onAddQuestion, creatorName = "You" }: Question
   return (
     <div className="bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
       {/* Question Input Area */}
-      <div className="p-8 bg-white flex flex-col items-center justify-center min-h-[160px] border-b border-slate-100 shadow-sm relative z-0">
+      <div className="p-8 bg-white flex flex-col items-center justify-center min-h-40 border-b border-slate-100 shadow-sm relative z-0">
          
          {/* Creator Badge */}
          <div className="absolute top-4 left-4 flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
@@ -114,7 +114,7 @@ export function QuestionBuilder({ onAddQuestion, creatorName = "You" }: Question
                                   ? 'bg-green-500 text-white shadow-md rotate-0' 
                                   : 'bg-black/5 text-transparent scale-0 group-hover:scale-100'
                             }`}>
-                                <Check className="w-5 h-5 stroke-[3]" />
+                                <Check className="w-5 h-5 stroke-3" />
                             </div>
                         </div>
                         <Input
