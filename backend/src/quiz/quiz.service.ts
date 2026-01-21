@@ -189,6 +189,7 @@ export class QuizService {
         }
       }
     }
+    quiz.updatedAt = new Date();
   }
 
   /**
