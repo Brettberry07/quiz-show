@@ -115,6 +115,22 @@ export class QuizController {
     }
 
     /**
+     * Validate if a quiz can be played
+     * 
+     * @param id - The quiz ID
+     * @returns Validation result
+     */
+    @Get(':id/validate')
+    validateQuiz(@Param('id') id: string) {
+        const validation = this.quizService.validateForGame(id);
+        return {
+            message: validation.valid ? 'Quiz is valid' : 'Quiz validation failed',
+            status: HttpStatus.OK,
+            data: validation,
+        };
+    }
+
+    /**
      * Retrieve a single quiz by ID
      * Returns full details including correct answers only if requester is the host
      * 
@@ -137,22 +153,6 @@ export class QuizController {
 
     // Note: getQuizForGame is called internally by GameService
     // It's not exposed as an HTTP endpoint to prevent clients from accessing correct answers
-
-    /**
-     * Validate if a quiz can be played
-     * 
-     * @param id - The quiz ID
-     * @returns Validation result
-     */
-    @Get(':id/validate')
-    validateQuiz(@Param('id') id: string) {
-        const validation = this.quizService.validateForGame(id);
-        return {
-            message: validation.valid ? 'Quiz is valid' : 'Quiz validation failed',
-            status: HttpStatus.OK,
-            data: validation,
-        };
-    }
 
     /**
      * Update a quiz
