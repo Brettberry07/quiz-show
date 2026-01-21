@@ -127,7 +127,7 @@ function GameButton({ icon, color, delay, onClick }: { icon: React.ReactNode, co
             transition={{ delay, type: "spring" }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.95 }}
-            className={`${color} rounded-xl shadow-[0_8px_0_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-[8px] transition-all flex items-center justify-center p-8 text-black`}
+            className={`${color} rounded-xl shadow-[0_8px_0_rgba(0,0,0,0.2)] active:shadow-none active:translate-y-2 transition-all flex items-center justify-center p-8 text-black`}
         >
             {icon}
         </motion.button>
