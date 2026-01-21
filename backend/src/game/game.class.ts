@@ -142,8 +142,10 @@ export class Game {
 		this.state = GameState.QUESTION_ACTIVE;
 		this.questionStartTime = process.hrtime.bigint();
 
-		const currentQuestion = this.quizData.questions[0];
-		this.scheduleQuestionEnd(currentQuestion.timeLimitSeconds, onQuestionEnd);
+		const currentQuestion = this.getCurrentQuestionInternal();
+		if (currentQuestion) {
+			this.scheduleQuestionEnd(currentQuestion.timeLimitSeconds, onQuestionEnd);
+		}
 
 		this.logger.log(`Game ${this.pin} started with ${this.players.size} players`);
 	}
@@ -180,7 +182,10 @@ export class Game {
 			throw new BadRequestException('Answer already submitted for this question');
 		}
 
-		const currentQuestion = this.quizData.questions[this.currentQuestionIndex];
+		const currentQuestion = this.getCurrentQuestionInternal();
+		if (!currentQuestion) {
+			throw new BadRequestException('No active question');
+		}
 		const submissionTime = process.hrtime.bigint();
 
 		if (answerIndex < 0 || answerIndex >= currentQuestion.options.length) {
@@ -318,8 +323,10 @@ export class Game {
 		this.state = GameState.QUESTION_ACTIVE;
 		this.questionStartTime = process.hrtime.bigint();
 
-		const currentQuestion = this.quizData.questions[this.currentQuestionIndex];
-		this.scheduleQuestionEnd(currentQuestion.timeLimitSeconds, onQuestionEnd);
+		const currentQuestion = this.getCurrentQuestionInternal();
+		if (currentQuestion) {
+			this.scheduleQuestionEnd(currentQuestion.timeLimitSeconds, onQuestionEnd);
+		}
 
 		this.logger.log(`Game ${this.pin} advanced to question ${this.currentQuestionIndex + 1}`);
 		
@@ -352,14 +359,37 @@ export class Game {
 	}
 
 	/**
-	 * Get current question DOES NOT SUPPLY ANSWER
+	 * Get current question without revealing the correct answer (for client display)
 	 */
-	getCurrentQuestion(): CachedQuestion | null {
+	getCurrentQuestion(): Omit<CachedQuestion, 'correctOptionIndex'> | null {
 		if (this.currentQuestionIndex < 0 || this.currentQuestionIndex >= this.quizData.questions.length) {
 			return null;
 		}
 
-		return this.quizData.questions[this.currentQuestionIndex]; // TODO: Replace with Quiz Object
+		const question = this.quizData.questions[this.currentQuestionIndex];
+		// Return question without correctOptionIndex to prevent client access
+		const { correctOptionIndex, ...safeQuestion } = question;
+		return safeQuestion;
+	}
+
+	/**
+	 * Get current question with answer (server-side only for validation)
+	 * @internal Used only by internal game logic for answer checking
+	 */
+	private getCurrentQuestionInternal(): CachedQuestion | null {
+		if (this.currentQuestionIndex < 0 || this.currentQuestionIndex >= this.quizData.questions.length) {
+			return null;
+		}
+		return this.quizData.questions[this.currentQuestionIndex];
+	}
+
+	/**
+	 * Get the correct answer for the current question
+	 * Only call this after question has ended to reveal answer to clients
+	 */
+	getCorrectAnswer(): number | null {
+		const question = this.getCurrentQuestionInternal();
+		return question ? question.correctOptionIndex : null;
 	}
 
 	/**

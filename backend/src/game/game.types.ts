@@ -36,7 +36,7 @@ export interface CachedQuestion {
 	timeLimitSeconds: number;
 	pointsMultiplier: number;
 	options: string[];
-	correctOptionIndex: number;
+	correctOptionIndex: number; // Used by GameModule for scoring
 }
 
 /**

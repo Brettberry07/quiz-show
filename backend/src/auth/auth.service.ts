@@ -43,7 +43,7 @@ export class AuthService {
 			return this.register(loginUserDto);
 		}
 
-		console.log('User found:', user);
+		// console.log('User found:', user);
 		if(!user.id) return Promise.reject(new BadRequestException('User not found'));
 		const tokens = await this.jwtService.rotateTokens(user.id);
 

@@ -262,9 +262,21 @@ export class GameService {
      * @param pin - The game's PIN
      * @return The current question or null if none
 	 */
-	getCurrentQuestion(pin: string): CachedQuestion | null {
+	getCurrentQuestion(pin: string): Omit<CachedQuestion, 'correctOptionIndex'> | null {
 		const game = this.getGame(pin);
 		return game.getCurrentQuestion();
+	}
+
+	/**
+	 * Get the correct answer for the current question
+	 * Only call after question has ended to reveal to clients
+     * 
+     * @param pin - The game's PIN
+     * @return The correct answer index or null
+	 */
+	getCorrectAnswer(pin: string): number | null {
+		const game = this.getGame(pin);
+		return game.getCorrectAnswer();
 	}
 
 	/**

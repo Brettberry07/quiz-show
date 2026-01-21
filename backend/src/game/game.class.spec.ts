@@ -85,7 +85,10 @@ describe('Game Class', () => {
       game.start(onQuestionEnd);
 
       expect(game.state).toBe(GameState.QUESTION_ACTIVE);
-      expect(game.getCurrentQuestion()).toEqual(mockQuiz.questions[0]);
+      const currentQ = game.getCurrentQuestion();
+      expect(currentQ).toBeDefined();
+      expect(currentQ?.id).toBe(mockQuiz.questions[0].id);
+      expect(currentQ).not.toHaveProperty('correctOptionIndex'); // Should not expose answer
     });
 
     it('should throw when starting with no players', () => {
@@ -137,7 +140,9 @@ describe('Game Class', () => {
 
        const hasNext = game.nextQuestion(jest.fn());
        expect(hasNext).toBe(true);
-       expect(game.getCurrentQuestion()).toEqual(mockQuiz.questions[1]);
+       const currentQ = game.getCurrentQuestion();
+       expect(currentQ?.id).toBe(mockQuiz.questions[1].id);
+       expect(currentQ).not.toHaveProperty('correctOptionIndex'); // Should not expose answer
     });
 
     it('should end game after last question', () => {
