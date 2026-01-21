@@ -96,7 +96,7 @@ export class GameService {
      * @returns The active game
 	 */
 	getGame(pin: string): Game {
-        if(pin.length !== 6) throw new BadRequestException('Invalid PIN format');
+        if (pin.length !== 6) throw new BadRequestException('Invalid PIN format');
 
 		const game = this.activeGames.get(pin);
 		if (!game) {
