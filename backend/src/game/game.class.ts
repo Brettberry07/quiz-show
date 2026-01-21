@@ -87,10 +87,10 @@ export class Game {
 	/**
 	 * Remove a player from the game
 	 */
-	removePlayer(userId: string): boolean {
+	removePlayer(userId: string): void {
 		if (this.players.delete(userId)) {
 			this.logger.log(`Player ${userId} removed from game ${this.pin}`);
-            return true;
+			return;
 		}
 		throw new BadRequestException(`Player ${userId} not found in game`);
 	}
