@@ -1,17 +1,28 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Waves, Hand } from "lucide-react";
+import { Waves, Hand, Droplets } from "lucide-react";
+import Link from "next/link";
 
 export default function PlayPage() {
   return (
-    <div className="min-h-screen bg-[#f0f0f0] flex flex-col items-center justify-between p-4 pb-12">
-       {/* Top Bar for Game (minimal) */}
-       <header className="w-full h-16 flex items-center justify-between pointer-events-none opacity-50">
-           <h1 className="text-2xl font-black">QuizSink</h1>
-           <div className="h-10 w-10 bg-gray-400 rounded-full" />
-       </header>
+    <div className="min-h-screen bg-[#f0f0f0] flex flex-col">
+       {/* Top Bar */}
+       <header className="sticky top-0 z-40 w-full bg-[#6b7280] text-white h-16 flex items-center justify-between px-6 shadow-md">
+        <div className="flex items-center gap-4">
+          <Link href="/home" className="flex items-center gap-2">
+            <Droplets className="h-8 w-8" />
+            <span className="text-2xl font-black tracking-tight">QuizSink</span>
+          </Link>
+        </div>
+        
+        <div className="flex items-center gap-4">
+            <span className="hidden md:inline font-medium ml-4">Berrybr</span>
+            <div className="h-10 w-10 rounded-full bg-white/80" />
+        </div>
+      </header>
 
+       <div className="flex-1 flex flex-col items-center justify-between p-4 pb-12">
        {/* Question Area (Placeholder) */}
        <div className="flex-1 flex items-center justify-center w-full mb-8">
           <motion.div 
@@ -55,6 +66,7 @@ export default function PlayPage() {
             delay={0.3}
           />
        </div>
+      </div>
     </div>
   );
 }
