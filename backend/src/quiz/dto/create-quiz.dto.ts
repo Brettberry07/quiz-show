@@ -40,6 +40,7 @@ export class CreateQuizDto {
   title: string;
 
   @IsArray({ message: "Questions must be an array" })
+  @ArrayMinSize(1, { message: "At least 1 question is required" })
   @ValidateNested({ each: true })
   @Type(() => CreateQuestionDto)
   questions: CreateQuestionDto[];
