@@ -179,14 +179,15 @@ export class QuizService {
       if (qDto.id) {
         // Update existing question
         const question = quiz.getQuestion(qDto.id);
-        if (question) {
-          if (qDto.text !== undefined) question.text = qDto.text;
-          if (qDto.type !== undefined) question.type = qDto.type;
-          if (qDto.timeLimitSeconds !== undefined) question.timeLimitSeconds = qDto.timeLimitSeconds;
-          if (qDto.pointsMultiplier !== undefined) question.pointsMultiplier = qDto.pointsMultiplier;
-          if (qDto.options !== undefined) question.options = qDto.options;
-          if (qDto.correctOptionIndex !== undefined) question.correctOptionIndex = qDto.correctOptionIndex;
+        if (!question) {
+          throw new NotFoundException(`Question with id "${qDto.id}" not found in quiz "${quiz.id}".`);
         }
+        if (qDto.text !== undefined) question.text = qDto.text;
+        if (qDto.type !== undefined) question.type = qDto.type;
+        if (qDto.timeLimitSeconds !== undefined) question.timeLimitSeconds = qDto.timeLimitSeconds;
+        if (qDto.pointsMultiplier !== undefined) question.pointsMultiplier = qDto.pointsMultiplier;
+        if (qDto.options !== undefined) question.options = qDto.options;
+        if (qDto.correctOptionIndex !== undefined) question.correctOptionIndex = qDto.correctOptionIndex;
       }
     }
     quiz.updatedAt = new Date();
