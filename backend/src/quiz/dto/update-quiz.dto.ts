@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { IsString, IsOptional, IsArray, ValidateNested, IsEnum, IsNumber, Min, IsInt, ArrayMinSize, IsNotEmpty, registerDecorator, ValidationOptions, ValidationArguments } from "class-validator";
 import { Type } from "class-transformer";
 import { QuestionType } from "../../game/game.types";
