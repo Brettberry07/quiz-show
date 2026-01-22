@@ -2,7 +2,8 @@
 
 import { motion } from "framer-motion";
 import Link from 'next/link';
-import { Droplets, Crown } from "lucide-react";
+import Image from "next/image";
+import { Crown } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 export default function WinnerPage() {
@@ -13,7 +14,7 @@ export default function WinnerPage() {
       {/* Top Header */}
       <header className="w-full h-16 bg-[#3D3030] flex items-center justify-between px-6 shadow-md z-10">
         <div className="flex items-center gap-3 text-white">
-            <img src="/text.svg" alt="QuizSink Logo" className="w-36 h-36" />
+            <Image src="/text.svg" alt="QuizSink Logo" width={144} height={144} className="w-36 h-36" />
         </div>
         <div className="flex items-center gap-3 text-white">
             <span className="text-xl font-medium">Mhiki</span>
