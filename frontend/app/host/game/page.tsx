@@ -3,11 +3,15 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Droplets, User, Waves, Hand } from "lucide-react";
 import Link from 'next/link';
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 
 export default function HostGamePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const currentQuestion = parseInt(searchParams.get("q") || "1");
+  const totalQuestions = parseInt(searchParams.get("total") || "12");
+  
   const [gameState, setGameState] = useState<'reading' | 'answering'>('reading');
   const [timeLeft, setTimeLeft] = useState(10);
 
@@ -29,14 +33,14 @@ export default function HostGamePage() {
         }, 1000);
         return () => clearInterval(timer);
     }
-    // Auto-advance when time is up
+    // Auto-advance when time is up - go to leaderboard
     if (timeLeft === 0) {
-        router.push("/host/winner");
+        router.push(`/host/leaderboard?q=${currentQuestion}&total=${totalQuestions}`);
     }
-  }, [gameState, timeLeft, router]);
+  }, [gameState, timeLeft, router, currentQuestion, totalQuestions]);
 
   const handleManualNext = () => {
-    router.push("/host/winner");
+    router.push(`/host/leaderboard?q=${currentQuestion}&total=${totalQuestions}`);
   };
 
   return (
@@ -53,7 +57,7 @@ export default function HostGamePage() {
                 </div>
 
                 <div className="flex flex-col items-center">
-                    <span className="text-xs font-bold uppercase tracking-widest text-white/70">Question 1 of 12</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-white/70">Question {currentQuestion} of {totalQuestions}</span>
                 </div>
                     
                 <div className="flex items-center gap-4">

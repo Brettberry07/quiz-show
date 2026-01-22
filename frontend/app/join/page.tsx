@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { Droplets } from "lucide-react";
 import Link from 'next/link';
 import { useRouter } from "next/navigation";
 import { useState } from "react";

@@ -2,15 +2,21 @@
 
 import { Card } from "@/components/ui/Card";
 import { motion, AnimatePresence } from "framer-motion";
-import { Waves, Hand, Droplets, Plus, X } from "lucide-react";
+import { Waves, Hand, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { QuestionBuilder, Question } from "@/components/QuestionBuilder";
 import { Button } from "@/components/ui/Button";
+import { useUser } from "@/context/UserContext";
 
 export default function PlayPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { username } = useUser();
+  const currentQuestion = parseInt(searchParams.get("q") || "1");
+  const totalQuestions = parseInt(searchParams.get("total") || "12");
+  
   const [gameState, setGameState] = useState<'waiting' | 'playing' | 'adding_question'>('waiting');
 
   useEffect(() => {
@@ -24,8 +30,10 @@ export default function PlayPage() {
     return () => clearTimeout(timer);
   }, [gameState]);
 
-  const handleAnswer = () => {
-    router.push("/host/winner");
+  const handleAnswer = (isCorrect: boolean) => {
+    // Calculate points based on speed (simulated)
+    const points = isCorrect ? Math.floor(Math.random() * 500) + 500 : 0;
+    router.push(`/play/leaderboard?q=${currentQuestion}&total=${totalQuestions}&points=${points}&correct=${isCorrect}`);
   };
 
   const handleSuggestQuestion = () => {
@@ -50,7 +58,7 @@ export default function PlayPage() {
         </div>
         
         <div className="flex items-center gap-4">
-            <span className="hidden md:inline font-medium ml-4">Berrybr</span>
+            <span className="hidden md:inline font-medium ml-4">{username || "Player"}</span>
             <div className="h-10 w-10 rounded-full bg-white/80" />
         </div>
       </header>
@@ -114,7 +122,7 @@ export default function PlayPage() {
                 </div>
                 <QuestionBuilder 
                     onAddQuestion={handleQuestionAdded}
-                    creatorName="Berrybr" // Hardcoded for simulation
+                    creatorName={username || "Player"} 
                 />
              </motion.div>
           )}
@@ -140,25 +148,25 @@ export default function PlayPage() {
                  {/* Answer Grid */}
                  <div className="w-full max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4 h-auto sm:h-96 pb-8">
                     <GameButton 
-                        onClick={handleAnswer}
+                        onClick={() => handleAnswer(false)}
                         icon={<Waves className="w-16 h-16 md:w-24 md:h-24 fill-current" />} 
                         color="bg-[#A59A9A]" // Theme color
                         delay={0}
                     />
                     <GameButton 
-                        onClick={handleAnswer}
+                        onClick={() => handleAnswer(false)}
                         icon={<div className="w-16 h-16 md:w-24 md:h-24 rounded-full border-8 border-current" />} 
                         color="bg-[#A59A9A]" 
                         delay={0.1}
                     />
                     <GameButton 
-                        onClick={handleAnswer}
+                        onClick={() => handleAnswer(true)}
                         icon={<Hand className="w-16 h-16 md:w-24 md:h-24 fill-current" />} 
                         color="bg-[#A59A9A]" 
                         delay={0.2}
                     />
                     <GameButton 
-                        onClick={handleAnswer}
+                        onClick={() => handleAnswer(false)}
                         icon={
                             <svg
                             className="w-16 h-16 md:w-24 md:h-24 fill-current"
