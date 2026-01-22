@@ -41,39 +41,39 @@ export default function LoginPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full max-w-sm"
+          className="w-full max-w-2xl"
         >
-            <div className="bg-white rounded-lg p-8 shadow-lg">
-            <div className="mb-8 text-center">
-              <img src="/QuizSink.svg" alt="QuizSink Logo" className="w-90 mx-auto" />
-            </div>
+        <div className="bg-white rounded-lg shadow-lg p-8 ">
+        <div className="mb-8 text-center">
+          <img src="/QuizSink.svg" alt="QuizSink Logo" className="w-90 mx-auto" />
+        </div>
 
-            <Card className="border-none bg-[#9ca3af] p-6 shadow-xl rounded-md">
-              <form onSubmit={handleLogin} className="space-y-4">
-              
-              <div className="space-y-2">
-                <Input
-                type="text"
-                placeholder="Username"
-                className="h-14 rounded-md border-b-4 border-[#cfcfcf] bg-[#e5e5e5] px-4 text-center text-xl font-bold text-[#555] placeholder:text-[#999] focus-visible:ring-0 focus-visible:border-[#555] transition-all"
-                />
-              </div>
+        <Card className="border-none bg-[#A59A9A] p-6 shadow-xl rounded-md">
+          <form onSubmit={handleLogin} className="space-y-4">
+          
+          <div className="space-y-2">
+            <Input
+            type="text"
+            placeholder="Username"
+            className="h-14 rounded-md border-b-4 border-[#cfcfcf] bg-[#e5e5e5] px-4 text-center text-xl font-bold text-[#555] placeholder:text-[#999] focus-visible:ring-0 focus-visible:border-[#555] transition-all"
+            />
+          </div>
 
-              <div className="pt-2">
-                <Button
-                type="submit"
-                disabled={loading}
-                className="h-14 w-full rounded-md border-b-4 border-[#111] bg-[#333] text-xl font-bold text-white hover:bg-[#222] hover:border-black active:border-b-0 active:translate-y-1 transition-all disabled:opacity-70"
-                >
-                <span className="flex items-center justify-center">
-                  {loading ? "Logging in..." : "Login"}
-                </span>
-                </Button>
-              </div>
+          <div className="pt-2">
+            <Button
+            type="submit"
+            disabled={loading}
+            className="h-14 w-full rounded-md border-b-4 border-[#111] bg-[#202020] text-xl font-bold text-white hover:bg-[#222] hover:border-black active:border-b-0 active:translate-y-1 transition-all disabled:opacity-70"
+            >
+            <span className="flex items-center justify-center">
+          {loading ? "Logging in..." : "Login"}
+            </span>
+            </Button>
+          </div>
 
-              </form>
-            </Card>
-            </div>
+          </form>
+        </Card>
+        </div>
         </motion.div>
       </main>
     </div>
