@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Link from 'next/link';
 import Image from "next/image";
-import { Crown } from "lucide-react";
+import { Crown, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 export default function WinnerPage() {
@@ -24,11 +24,19 @@ export default function WinnerPage() {
 
       {/* Podium Section */}
       <main className="flex-1 flex items-end justify-center pb-0 px-4 relative">
-        <Link href="/home" className="absolute top-8 right-8 z-20">
-            <Button variant="secondary" className="bg-[#3D3030] text-white hover:bg-[#2D2020] border-b-4 border-[#1D1010] active:border-b-0 active:translate-y-1 transition-all">
-                Back Home
-            </Button>
-        </Link>
+        <div className="absolute top-8 right-8 z-20 flex gap-3">
+            <Link href="/host/review">
+                <Button variant="secondary" className="bg-[#A59A9A] text-[#333] hover:bg-[#958A8A] border-b-4 border-[#857A7A] active:border-b-0 active:translate-y-1 transition-all flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4" />
+                    Review Questions
+                </Button>
+            </Link>
+            <Link href="/home">
+                <Button variant="secondary" className="bg-[#3D3030] text-white hover:bg-[#2D2020] border-b-4 border-[#1D1010] active:border-b-0 active:translate-y-1 transition-all">
+                    Back Home
+                </Button>
+            </Link>
+        </div>
         
          <div className="flex items-end justify-center w-full max-w-4xl gap-4 md:gap-8 h-full pb-0">
             
