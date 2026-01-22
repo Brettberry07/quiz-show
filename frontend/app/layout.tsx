@@ -4,6 +4,7 @@ import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 import { UserProvider } from "@/context/UserContext";
 import { QuizProvider } from "@/context/QuizContext";
+import { GameProvider } from "@/context/GameContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,8 +33,10 @@ export default function RootLayout({
       >
         <UserProvider>
           <QuizProvider>
-            <SmoothScroll />
-            {children}
+            <GameProvider>
+              <SmoothScroll />
+              {children}
+            </GameProvider>
           </QuizProvider>
         </UserProvider>
       </body>

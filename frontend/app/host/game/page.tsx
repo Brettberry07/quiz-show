@@ -5,15 +5,31 @@ import { Droplets, User, Waves, Hand } from "lucide-react";
 import Link from 'next/link';
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useGame } from "@/context/GameContext";
+
+const ANSWER_ICONS = [
+  <Waves key="wave" className="w-12 h-12 fill-current" />,
+  <div key="circle" className="w-12 h-12 rounded-full border-8 border-current" />,
+  <Hand key="hand" className="w-12 h-12 fill-current" />,
+  <svg key="svg" className="w-12 h-12 fill-current" viewBox="0 0 64 64" fill="currentColor"><path d="M50 16h-8v-4a6 6 0 00-12 0v4H18a6 6 0 00-6 6v4a6 6 0 006 6h2v18a6 6 0 006 6h12a6 6 0 006-6V32h2a6 6 0 006-6v-4a6 6 0 00-6-6zm-20-4a2 2 0 114 0v4h-4v-4zm18 14a2 2 0 01-2 2h-4v20a2 2 0 01-2 2H28a2 2 0 01-2-2V28h-4a2 2 0 01-2-2v-4a2 2 0 012-2h24a2 2 0 012 2v4z" /></svg>
+];
 
 export default function HostGamePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentQuestion = parseInt(searchParams.get("q") || "1");
-  const totalQuestions = parseInt(searchParams.get("total") || "12");
+  const currentQuestionNum = parseInt(searchParams.get("q") || "1");
+  const totalQuestions = parseInt(searchParams.get("total") || "1");
+  
+  const { currentQuiz, setCurrentQuestionIndex } = useGame();
+  const currentQuestion = currentQuiz?.questions[currentQuestionNum - 1];
   
   const [gameState, setGameState] = useState<'reading' | 'answering'>('reading');
   const [timeLeft, setTimeLeft] = useState(10);
+
+  // Set the current question index in context
+  useEffect(() => {
+    setCurrentQuestionIndex(currentQuestionNum - 1);
+  }, [currentQuestionNum, setCurrentQuestionIndex]);
 
   // Initial sequence: Read question (5s) -> Answer phase (starts timer)
   useEffect(() => {
@@ -35,13 +51,25 @@ export default function HostGamePage() {
     }
     // Auto-advance when time is up - go to leaderboard
     if (timeLeft === 0) {
-        router.push(`/host/leaderboard?q=${currentQuestion}&total=${totalQuestions}`);
+        router.push(`/host/leaderboard?q=${currentQuestionNum}&total=${totalQuestions}`);
     }
-  }, [gameState, timeLeft, router, currentQuestion, totalQuestions]);
+  }, [gameState, timeLeft, router, currentQuestionNum, totalQuestions]);
 
   const handleManualNext = () => {
-    router.push(`/host/leaderboard?q=${currentQuestion}&total=${totalQuestions}`);
+    router.push(`/host/leaderboard?q=${currentQuestionNum}&total=${totalQuestions}`);
   };
+
+  // If no quiz loaded, show loading or redirect
+  if (!currentQuiz || !currentQuestion) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
+        <div className="bg-white p-8 rounded-2xl shadow-lg text-center">
+          <h2 className="text-2xl font-bold mb-4">No quiz loaded</h2>
+          <Link href="/home" className="text-blue-500 underline">Go back home</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full text-[#111] flex flex-col overflow-hidden" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
@@ -57,7 +85,7 @@ export default function HostGamePage() {
                 </div>
 
                 <div className="flex flex-col items-center">
-                    <span className="text-xs font-bold uppercase tracking-widest text-white/70">Question {currentQuestion} of {totalQuestions}</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-white/70">Question {currentQuestionNum} of {totalQuestions}</span>
                 </div>
                     
                 <div className="flex items-center gap-4">
@@ -92,10 +120,10 @@ export default function HostGamePage() {
                 >
                 <div className="space-y-6">
                     <span className="inline-block px-4 py-1 bg-black text-white text-sm font-bold uppercase tracking-widest rounded-full mb-4">
-                        General Knowledge
+                        {currentQuiz.name}
                     </span>
                     <h1 className={`${gameState === 'answering' ? 'text-4xl' : 'text-5xl md:text-7xl'} font-black tracking-tight text-[#1a1a1a] leading-tight transition-all duration-500`}>
-                        What is the capital of France?
+                        {currentQuestion.question}
                     </h1>
                 </div>
             </motion.div>
@@ -111,27 +139,15 @@ export default function HostGamePage() {
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     className="w-full max-w-7xl grid grid-cols-2 gap-4 h-64"
                  >
-                    <AnswerCard 
-                        icon={<Waves className="w-12 h-12 fill-current" />} 
-                        label="London" 
-                        color="bg-[#A59A9A]" // Theme color
-                    />
-                    <AnswerCard 
-                        icon={<div className="w-12 h-12 rounded-full border-8 border-current" />} 
-                        label="Berlin" 
-                        color="bg-[#A59A9A]" 
-                    />
-                    <AnswerCard 
-                        icon={<Hand className="w-12 h-12 fill-current" />} 
-                        label="Paris" 
+                    {currentQuestion.options.map((option, index) => (
+                      <AnswerCard 
+                        key={index}
+                        icon={ANSWER_ICONS[index % ANSWER_ICONS.length]} 
+                        label={option} 
                         color="bg-[#A59A9A]"
-                        isCorrect // Metadata for later
-                    />
-                    <AnswerCard 
-                        icon={<svg className="w-12 h-12 fill-current" viewBox="0 0 64 64" fill="currentColor"><path d="M50 16h-8v-4a6 6 0 00-12 0v4H18a6 6 0 00-6 6v4a6 6 0 006 6h2v18a6 6 0 006 6h12a6 6 0 006-6V32h2a6 6 0 006-6v-4a6 6 0 00-6-6zm-20-4a2 2 0 114 0v4h-4v-4zm18 14a2 2 0 01-2 2h-4v20a2 2 0 01-2 2H28a2 2 0 01-2-2V28h-4a2 2 0 01-2-2v-4a2 2 0 012-2h24a2 2 0 012 2v4z" /></svg>} 
-                        label="Madrid" 
-                        color="bg-[#A59A9A]" 
-                    />
+                        isCorrect={index === currentQuestion.correctAnswer}
+                      />
+                    ))}
                  </motion.div>
             )}
         </AnimatePresence>

@@ -9,13 +9,23 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { QuestionBuilder, Question } from "@/components/QuestionBuilder";
 import { Button } from "@/components/ui/Button";
 import { useUser } from "@/context/UserContext";
+import { useGame } from "@/context/GameContext";
+
+const ANSWER_ICONS = [
+  <Waves key="wave" className="w-16 h-16 md:w-24 md:h-24 fill-current" />,
+  <div key="circle" className="w-16 h-16 md:w-24 md:h-24 rounded-full border-8 border-current" />,
+  <Hand key="hand" className="w-16 h-16 md:w-24 md:h-24 fill-current" />,
+  <svg key="svg" className="w-16 h-16 md:w-24 md:h-24 fill-current" viewBox="0 0 64 64" fill="currentColor"><path d="M50 16h-8v-4a6 6 0 00-12 0v4H18a6 6 0 00-6 6v4a6 6 0 006 6h2v18a6 6 0 006 6h12a6 6 0 006-6V32h2a6 6 0 006-6v-4a6 6 0 00-6-6zm-20-4a2 2 0 114 0v4h-4v-4zm18 14a2 2 0 01-2 2h-4v20a2 2 0 01-2 2H28a2 2 0 01-2-2V28h-4a2 2 0 01-2-2v-4a2 2 0 012-2h24a2 2 0 012 2v4z" /></svg>
+];
 
 export default function PlayPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { username } = useUser();
-  const currentQuestion = parseInt(searchParams.get("q") || "1");
-  const totalQuestions = parseInt(searchParams.get("total") || "12");
+  const { currentQuiz } = useGame();
+  const currentQuestionNum = parseInt(searchParams.get("q") || "1");
+  const totalQuestions = currentQuiz?.questions.length || parseInt(searchParams.get("total") || "1");
+  const currentQuestion = currentQuiz?.questions[currentQuestionNum - 1];
   
   const [gameState, setGameState] = useState<'waiting' | 'playing' | 'adding_question'>('waiting');
 
@@ -30,10 +40,11 @@ export default function PlayPage() {
     return () => clearTimeout(timer);
   }, [gameState]);
 
-  const handleAnswer = (isCorrect: boolean) => {
+  const handleAnswer = (selectedIndex: number) => {
+    const isCorrect = currentQuestion ? selectedIndex === currentQuestion.correctAnswer : false;
     // Calculate points based on speed (simulated)
     const points = isCorrect ? Math.floor(Math.random() * 500) + 500 : 0;
-    router.push(`/play/leaderboard?q=${currentQuestion}&total=${totalQuestions}&points=${points}&correct=${isCorrect}`);
+    router.push(`/play/leaderboard?q=${currentQuestionNum}&total=${totalQuestions}&points=${points}&correct=${isCorrect}`);
   };
 
   const handleSuggestQuestion = () => {
@@ -134,52 +145,37 @@ export default function PlayPage() {
                 animate={{ opacity: 1 }}
                 className="w-full flex flex-col flex-1 h-full"
              >
-                 {/* Question Area (Placeholder) */}
+                 {/* Question Area */}
                  <div className="flex-1 flex items-center justify-center w-full mb-8">
                     <motion.div 
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         className="bg-white p-8 rounded-2xl shadow-lg max-w-2xl w-full text-center min-h-50 flex items-center justify-center"
                     >
-                        <h2 className="text-4xl font-black text-black">What is the capital of France?</h2>
+                        <h2 className="text-4xl font-black text-black">
+                          {currentQuestion?.question || "Loading question..."}
+                        </h2>
                     </motion.div>
                  </div>
 
                  {/* Answer Grid */}
                  <div className="w-full max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4 h-auto sm:h-96 pb-8">
-                    <GameButton 
-                        onClick={() => handleAnswer(false)}
-                        icon={<Waves className="w-16 h-16 md:w-24 md:h-24 fill-current" />} 
-                        color="bg-[#A59A9A]" // Theme color
-                        delay={0}
-                    />
-                    <GameButton 
-                        onClick={() => handleAnswer(false)}
-                        icon={<div className="w-16 h-16 md:w-24 md:h-24 rounded-full border-8 border-current" />} 
-                        color="bg-[#A59A9A]" 
-                        delay={0.1}
-                    />
-                    <GameButton 
-                        onClick={() => handleAnswer(true)}
-                        icon={<Hand className="w-16 h-16 md:w-24 md:h-24 fill-current" />} 
-                        color="bg-[#A59A9A]" 
-                        delay={0.2}
-                    />
-                    <GameButton 
-                        onClick={() => handleAnswer(false)}
-                        icon={
-                            <svg
-                            className="w-16 h-16 md:w-24 md:h-24 fill-current"
-                            viewBox="0 0 64 64"
-                            fill="currentColor"
-                            aria-hidden="true"
-                        >
-                            <path d="M50 16h-8v-4a6 6 0 00-12 0v4H18a6 6 0 00-6 6v4a6 6 0 006 6h2v18a6 6 0 006 6h12a6 6 0 006-6V32h2a6 6 0 006-6v-4a6 6 0 00-6-6zm-20-4a2 2 0 114 0v4h-4v-4zm18 14a2 2 0 01-2 2h-4v20a2 2 0 01-2 2H28a2 2 0 01-2-2V28h-4a2 2 0 01-2-2v-4a2 2 0 012-2h24a2 2 0 012 2v4z" />
-                        </svg>
-                        } 
-                        color="bg-[#A59A9A]" 
-                        delay={0.3}
-                    />
+                    {currentQuestion?.options.map((option, index) => (
+                      <GameButton 
+                        key={index}
+                        onClick={() => handleAnswer(index)}
+                        icon={ANSWER_ICONS[index % ANSWER_ICONS.length]} 
+                        color="bg-[#A59A9A]"
+                        delay={index * 0.1}
+                      />
+                    )) || (
+                      <>
+                        <GameButton onClick={() => handleAnswer(0)} icon={ANSWER_ICONS[0]} color="bg-[#A59A9A]" delay={0} />
+                        <GameButton onClick={() => handleAnswer(1)} icon={ANSWER_ICONS[1]} color="bg-[#A59A9A]" delay={0.1} />
+                        <GameButton onClick={() => handleAnswer(2)} icon={ANSWER_ICONS[2]} color="bg-[#A59A9A]" delay={0.2} />
+                        <GameButton onClick={() => handleAnswer(3)} icon={ANSWER_ICONS[3]} color="bg-[#A59A9A]" delay={0.3} />
+                      </>
+                    )}
                  </div>
              </motion.div>
           )}

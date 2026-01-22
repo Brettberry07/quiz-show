@@ -7,7 +7,9 @@ import { User, Copy, ArrowRight, Music, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Droplets } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useQuizzes } from "@/context/QuizContext";
+import { useGame } from "@/context/GameContext";
 
 const SIMULATED_PLAYERS = [
   "Big Brain", "QuizWhiz", "FastFingers", "TriviaMaster", "Guesser", "KnowledgeKing", "SmartyPants", "TheWinner"
@@ -15,8 +17,22 @@ const SIMULATED_PLAYERS = [
 
 export default function HostPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const quizId = searchParams.get("quizId");
+    const { getQuiz } = useQuizzes();
+    const { setCurrentQuiz, currentQuiz } = useGame();
     const [players, setPlayers] = useState<string[]>([]);
     const code = "123-456";
+
+    // Load quiz from URL param
+    useEffect(() => {
+        if (quizId) {
+            const quiz = getQuiz(quizId);
+            if (quiz) {
+                setCurrentQuiz(quiz);
+            }
+        }
+    }, [quizId, getQuiz, setCurrentQuiz]);
 
     useEffect(() => {
         let currentIndex = 0;
@@ -106,10 +122,11 @@ export default function HostPage() {
 
                 <div className="mt-8 flex justify-end">
                      <Button
-                        onClick={() => router.push('/host/game')} 
-                        className="h-14 px-12 bg-[#202020] text-white text-xl font-black hover:bg-[#333] hover:scale-105 active:scale-95 transition-all shadow-xl rounded-full border-b-4 border-[#111] active:border-b-0 active:translate-y-1"
+                        onClick={() => router.push(`/host/game?q=1&total=${currentQuiz?.questions.length || 1}`)} 
+                        disabled={!currentQuiz || currentQuiz.questions.length === 0}
+                        className="h-14 px-12 bg-[#202020] text-white text-xl font-black hover:bg-[#333] hover:scale-105 active:scale-95 transition-all shadow-xl rounded-full border-b-4 border-[#111] active:border-b-0 active:translate-y-1 disabled:opacity-50"
                      >
-                        Start Game <ArrowRight className="ml-2 w-6 h-6" />
+                        Start Game ({currentQuiz?.questions.length || 0} Questions) <ArrowRight className="ml-2 w-6 h-6" />
                      </Button>
                 </div>
               </div>
