@@ -5,14 +5,33 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, Trash2, Save, Layout, Type, User } from "lucide-react";
 import { QuestionBuilder, Question } from "@/components/QuestionBuilder";
+import { useQuizzes } from "@/context/QuizContext";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function CreatePage() {
   const [quizName, setQuizName] = useState("");
   const [description, setDescription] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
+  const { addQuiz, updateQuiz, getQuiz } = useQuizzes();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit");
+  const isEditing = !!editId;
+
+  // Load quiz data when editing
+  useEffect(() => {
+    if (editId) {
+      const quiz = getQuiz(editId);
+      if (quiz) {
+        setQuizName(quiz.name);
+        setDescription(quiz.description);
+        setQuestions(quiz.questions);
+      }
+    }
+  }, [editId, getQuiz]);
 
   const handleAddQuestion = (newQuestion: Question) => {
     setQuestions([...questions, newQuestion]);
@@ -33,15 +52,22 @@ export default function CreatePage() {
       return;
     }
 
-    const quizData = {
-      name: quizName,
-      description,
-      questions,
-    };
+    if (isEditing && editId) {
+      updateQuiz(editId, {
+        name: quizName,
+        description,
+        questions,
+      });
+    } else {
+      addQuiz({
+        name: quizName,
+        description,
+        questions,
+      });
+    }
 
-    console.log("Quiz created:", quizData);
-    // TODO: Send to backend API
-    alert("Quiz created successfully!");
+    // Redirect to home page after saving
+    router.push("/home");
   };
 
   return (
@@ -53,14 +79,16 @@ export default function CreatePage() {
             <div className="bg-[#3D3030] p-2 rounded-lg">
               <Layout className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-xl font-black text-[#3D3030] tracking-tight">Quiz Creator</h1>
+            <h1 className="text-xl font-black text-[#3D3030] tracking-tight">
+              {isEditing ? "Edit Quiz" : "Quiz Creator"}
+            </h1>
           </div>
           <Button
             onClick={handleSubmitQuiz}
             className="bg-[#202020] hover:bg-[#333] text-white font-bold px-6 py-2 rounded-lg shadow-sm border-b-4 border-[#111] active:border-b-0 active:translate-y-1 transition-all"
           >
             <Save className="w-4 h-4 mr-2" />
-            Save Quiz
+            {isEditing ? "Update Quiz" : "Save Quiz"}
           </Button>
         </div>
 
