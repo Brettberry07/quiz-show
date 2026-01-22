@@ -38,15 +38,12 @@ export default function JoinPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f1f1f1] text-[#111]">
-      {/* Top Bar - Clean, just branding */}
-      <header className="w-full bg-[#7a7a7a] text-white shadow-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center px-6">
-          <Link href="/home" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/15">
-              <Droplets className="h-6 w-6" />
-            </div>
-            <span className="text-xl font-black tracking-tight">QuizSink</span>
+    <div className="min-h-screen w-full text-[#111]" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
+      {/* Top Bar - Same as Shell */}
+      <header className="sticky top-0 z-40 w-full bg-[#3D3030] text-white h-16 flex items-center justify-between px-6 shadow-md">
+        <div className="flex items-center gap-4">
+          <Link href="/home" className="flex items-center gap-2">
+            <img src="/text.svg" alt="QuizSink Logo" className="w-36 h-36" />
           </Link>
         </div>
       </header>
@@ -59,15 +56,17 @@ export default function JoinPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full max-w-sm"
+          className="w-full max-w-2xl"
         >
+        <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="mb-8 text-center">
-            <h1 className="text-6xl font-black tracking-tight text-[#1a1a1a] drop-shadow-sm uppercase">
+            <img src="/QuizSink.svg" alt="QuizSink Logo" className="w-90 mx-auto mb-4" />
+            <h2 className="text-3xl font-black tracking-tight text-[#1a1a1a] uppercase">
               JOIN GAME
-            </h1>
+            </h2>
           </div>
 
-          <Card className="border-none bg-[#9ca3af] p-6 shadow-xl rounded-md">
+          <Card className="border-none bg-[#A59A9A] p-6 shadow-xl rounded-md">
             <form onSubmit={handleJoin} className="space-y-4">
               
               <div className="space-y-2">
@@ -84,7 +83,7 @@ export default function JoinPage() {
                 <Button
                   type="submit"
                   disabled={loading || code.length < 7}
-                  className="h-14 w-full rounded-md border-b-4 border-[#111] bg-[#333] text-xl font-bold text-white hover:bg-[#222] hover:border-black active:border-b-0 active:translate-y-1 transition-all disabled:opacity-70"
+                  className="h-14 w-full rounded-md border-b-4 border-[#111] bg-[#202020] text-xl font-bold text-white hover:bg-[#222] hover:border-black active:border-b-0 active:translate-y-1 transition-all disabled:opacity-70"
                 >
                   <span className="flex items-center justify-center">
                     {loading ? "Joining..." : "Enter"}
@@ -94,6 +93,7 @@ export default function JoinPage() {
 
             </form>
           </Card>
+        </div>
         </motion.div>
       </main>
     </div>

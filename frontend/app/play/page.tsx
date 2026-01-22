@@ -40,13 +40,12 @@ export default function PlayPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f0f0f0] flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
        {/* Top Bar */}
-       <header className="sticky top-0 z-40 w-full bg-[#6b7280] text-white h-16 flex items-center justify-between px-6 shadow-md">
+       <header className="sticky top-0 z-40 w-full bg-[#3D3030] text-white h-16 flex items-center justify-between px-6 shadow-md">
         <div className="flex items-center gap-4">
           <Link href="/home" className="flex items-center gap-2">
-            <Droplets className="h-8 w-8" />
-            <span className="text-2xl font-black tracking-tight">QuizSink</span>
+            <img src="/text.svg" alt="QuizSink Logo" className="w-36 h-36" />
           </Link>
         </div>
         
@@ -72,7 +71,7 @@ export default function PlayPage() {
                 </div>
 
                 <div className="flex justify-center py-4">
-                     <div className="h-16 w-16 border-4 border-[#ccc] border-t-[#333] rounded-full animate-spin" />
+                     <div className="h-16 w-16 border-4 border-[#A59A9A] border-t-[#3D3030] rounded-full animate-spin" />
                 </div>
 
                 <motion.div 
@@ -84,7 +83,7 @@ export default function PlayPage() {
                         <h3 className="font-bold text-lg mb-2">Got a good question?</h3>
                         <Button 
                             onClick={handleSuggestQuestion}
-                            className="w-full bg-[#333] text-white hover:bg-black font-bold h-12"
+                            className="w-full bg-[#202020] text-white hover:bg-[#333] font-bold h-12 border-b-4 border-[#111] active:border-b-0 active:translate-y-1 transition-all"
                         >
                             <Plus className="w-4 h-4 mr-2" />
                             Suggest a Question
@@ -143,19 +142,19 @@ export default function PlayPage() {
                     <GameButton 
                         onClick={handleAnswer}
                         icon={<Waves className="w-16 h-16 md:w-24 md:h-24 fill-current" />} 
-                        color="bg-[#a3a3a3]" // Gray
+                        color="bg-[#A59A9A]" // Theme color
                         delay={0}
                     />
                     <GameButton 
                         onClick={handleAnswer}
                         icon={<div className="w-16 h-16 md:w-24 md:h-24 rounded-full border-8 border-current" />} 
-                        color="bg-[#a3a3a3]" 
+                        color="bg-[#A59A9A]" 
                         delay={0.1}
                     />
                     <GameButton 
                         onClick={handleAnswer}
                         icon={<Hand className="w-16 h-16 md:w-24 md:h-24 fill-current" />} 
-                        color="bg-[#a3a3a3]" 
+                        color="bg-[#A59A9A]" 
                         delay={0.2}
                     />
                     <GameButton 
@@ -170,7 +169,7 @@ export default function PlayPage() {
                             <path d="M50 16h-8v-4a6 6 0 00-12 0v4H18a6 6 0 00-6 6v4a6 6 0 006 6h2v18a6 6 0 006 6h12a6 6 0 006-6V32h2a6 6 0 006-6v-4a6 6 0 00-6-6zm-20-4a2 2 0 114 0v4h-4v-4zm18 14a2 2 0 01-2 2h-4v20a2 2 0 01-2 2H28a2 2 0 01-2-2V28h-4a2 2 0 01-2-2v-4a2 2 0 012-2h24a2 2 0 012 2v4z" />
                         </svg>
                         } 
-                        color="bg-[#a3a3a3]" 
+                        color="bg-[#A59A9A]" 
                         delay={0.3}
                     />
                  </div>

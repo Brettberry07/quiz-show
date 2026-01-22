@@ -40,15 +40,14 @@ export default function HostGamePage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f1f1f1] text-[#111] flex flex-col overflow-hidden">
+    <div className="min-h-screen w-full text-[#111] flex flex-col overflow-hidden" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
        {/* Host Header */}
-       <div className="bg-[#7a7a7a] text-white shadow-md relative overflow-hidden h-20 shrink-0 z-20">
+       <div className="bg-[#3D3030] text-white shadow-md relative overflow-hidden h-20 shrink-0 z-20">
             <div className="max-w-7xl mx-auto flex items-center justify-between h-full px-6 relative z-10">
                     <div className="flex items-center gap-4">
                     <Link href="/home">
                         <div className="flex items-center gap-2 text-white/90 hover:text-white transition-colors">
-                            <Droplets className="h-8 w-8" />
-                            <span className="text-xl font-black tracking-tight">QuizSink</span>
+                            <img src="/text.svg" alt="QuizSink Logo" className="w-36 h-36" />
                         </div>
                     </Link>
                 </div>
@@ -58,7 +57,7 @@ export default function HostGamePage() {
                 </div>
                     
                 <div className="flex items-center gap-4">
-                    <div className="bg-black/20 px-4 py-2 rounded-lg flex items-center gap-2">
+                    <div className="bg-white/20 px-4 py-2 rounded-lg flex items-center gap-2">
                         <User className="w-5 h-5" />
                         <span className="font-bold">8</span>
                     </div>
@@ -111,23 +110,23 @@ export default function HostGamePage() {
                     <AnswerCard 
                         icon={<Waves className="w-12 h-12 fill-current" />} 
                         label="London" 
-                        color="bg-[#a3a3a3]" // Gray
+                        color="bg-[#A59A9A]" // Theme color
                     />
                     <AnswerCard 
                         icon={<div className="w-12 h-12 rounded-full border-8 border-current" />} 
                         label="Berlin" 
-                        color="bg-[#a3a3a3]" 
+                        color="bg-[#A59A9A]" 
                     />
                     <AnswerCard 
                         icon={<Hand className="w-12 h-12 fill-current" />} 
                         label="Paris" 
-                        color="bg-[#a3a3a3]"
+                        color="bg-[#A59A9A]"
                         isCorrect // Metadata for later
                     />
                     <AnswerCard 
                         icon={<svg className="w-12 h-12 fill-current" viewBox="0 0 64 64" fill="currentColor"><path d="M50 16h-8v-4a6 6 0 00-12 0v4H18a6 6 0 00-6 6v4a6 6 0 006 6h2v18a6 6 0 006 6h12a6 6 0 006-6V32h2a6 6 0 006-6v-4a6 6 0 00-6-6zm-20-4a2 2 0 114 0v4h-4v-4zm18 14a2 2 0 01-2 2h-4v20a2 2 0 01-2 2H28a2 2 0 01-2-2V28h-4a2 2 0 01-2-2v-4a2 2 0 012-2h24a2 2 0 012 2v4z" /></svg>} 
                         label="Madrid" 
-                        color="bg-[#a3a3a3]" 
+                        color="bg-[#A59A9A]" 
                     />
                  </motion.div>
             )}
@@ -139,7 +138,7 @@ export default function HostGamePage() {
                  <motion.div 
                     initial={{ scale: 0 }} 
                     animate={{ scale: 1 }}
-                    className="w-24 h-24 rounded-full bg-[#333] border-8 border-[#ccc] flex items-center justify-center shadow-lg"
+                    className="w-24 h-24 rounded-full bg-[#3D3030] border-8 border-[#A59A9A] flex items-center justify-center shadow-lg"
                 >
                     <span className={`text-4xl font-black ${timeLeft <= 5 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
                         {timeLeft}

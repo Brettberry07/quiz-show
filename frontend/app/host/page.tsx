@@ -33,15 +33,14 @@ export default function HostPage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-[#f1f1f1] flex flex-col text-[#111]">
+        <div className="min-h-screen flex flex-col text-[#111]" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
             {/* Header with Branding and Code */}
-             <div className="bg-[#7a7a7a] text-white shadow-md relative overflow-hidden">
+             <div className="bg-[#3D3030] text-white shadow-md relative overflow-hidden">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between py-4 px-6 relative z-10">
                      <div className="flex items-center gap-4 mb-4 md:mb-0">
                         <Link href="/home">
                             <div className="flex items-center gap-2 text-white/90 hover:text-white transition-colors">
-                                <Droplets className="h-8 w-8" />
-                                <span className="text-xl font-black tracking-tight">QuizSink</span>
+                                <img src="/text.svg" alt="QuizSink Logo" className="w-36 h-36" />
                             </div>
                         </Link>
                     </div>
@@ -65,9 +64,10 @@ export default function HostPage() {
 
             {/* Players Grid */}
             <main className="flex-1 p-8 max-w-7xl mx-auto w-full flex flex-col">
-                <div className="flex justify-between items-end mb-8 border-b-2 border-[#d4d4d4] pb-4">
+              <div className="bg-white rounded-lg shadow-lg p-6 flex-1 flex flex-col">
+                <div className="flex justify-between items-end mb-8 border-b-2 border-[#A59A9A] pb-4">
                      <div className="flex items-center gap-3">
-                        <div className="bg-[#333] p-2 rounded-lg">
+                        <div className="bg-[#3D3030] p-2 rounded-lg">
                             <User className="h-6 w-6 text-white" />
                         </div>
                         <div>
@@ -75,7 +75,7 @@ export default function HostPage() {
                             <p className="font-bold text-[#666]">Waiting for players to join...</p>
                         </div>
                      </div>
-                     <h3 className="text-4xl font-black text-[#333] bg-[#d4d4d4] px-4 py-1 rounded-lg">
+                     <h3 className="text-4xl font-black text-[#333] bg-[#A59A9A] px-4 py-1 rounded-lg">
                         {players.length}
                      </h3>
                 </div>
@@ -90,7 +90,7 @@ export default function HostPage() {
                             exit={{ opacity: 0, scale: 0.5 }}
                             transition={{ type: "spring", stiffness: 400, damping: 25 }}
                         >
-                            <Card className="bg-[#333] border-none text-white font-bold text-xl h-20 flex items-center justify-center shadow-[0_4px_0_rgba(0,0,0,0.2)] hover:scale-105 transition-transform cursor-default">
+                            <Card className="bg-[#3D3030] border-none text-white font-bold text-xl h-20 flex items-center justify-center shadow-[0_4px_0_rgba(0,0,0,0.2)] hover:scale-105 transition-transform cursor-default">
                                 {player}
                             </Card>
                         </motion.div>
@@ -107,11 +107,12 @@ export default function HostPage() {
                 <div className="mt-8 flex justify-end">
                      <Button
                         onClick={() => router.push('/host/game')} 
-                        className="h-14 px-12 bg-black text-white text-xl font-black hover:bg-[#222] hover:scale-105 active:scale-95 transition-all shadow-xl rounded-full"
+                        className="h-14 px-12 bg-[#202020] text-white text-xl font-black hover:bg-[#333] hover:scale-105 active:scale-95 transition-all shadow-xl rounded-full border-b-4 border-[#111] active:border-b-0 active:translate-y-1"
                      >
                         Start Game <ArrowRight className="ml-2 w-6 h-6" />
                      </Button>
                 </div>
+              </div>
             </main>
         </div>
     )
