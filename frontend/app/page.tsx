@@ -4,17 +4,21 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { Droplets } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useUser } from "@/context/UserContext";
 
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [usernameInput, setUsernameInput] = useState("");
+  const { setUsername } = useUser();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!usernameInput.trim()) return;
     setLoading(true);
+    setUsername(usernameInput.trim());
     // Simulate network delay
     setTimeout(() => {
         router.push("/home");
@@ -43,6 +47,7 @@ export default function LoginPage() {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="w-full max-w-2xl"
         >
+          
         <div className="bg-white rounded-lg shadow-lg p-8 ">
         <div className="mb-8 text-center">
           <img src="/QuizSink.svg" alt="QuizSink Logo" className="w-90 mx-auto" />
@@ -55,6 +60,8 @@ export default function LoginPage() {
             <Input
             type="text"
             placeholder="Username"
+            value={usernameInput}
+            onChange={(e) => setUsernameInput(e.target.value)}
             className="h-14 rounded-md border-b-4 border-[#cfcfcf] bg-[#e5e5e5] px-4 text-center text-xl font-bold text-[#555] placeholder:text-[#999] focus-visible:ring-0 focus-visible:border-[#555] transition-all"
             />
           </div>

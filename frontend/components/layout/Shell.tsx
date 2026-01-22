@@ -3,9 +3,10 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Droplets, Home, Library, Plus, Search, Settings, LogOut } from "lucide-react";
+import { Droplets, Home, Library, Plus, Search, Settings, LogOut, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/context/UserContext";
 
 interface ShellProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ interface ShellProps {
 
 export function Shell({ children }: ShellProps) {
   const pathname = usePathname();
+  const { username } = useUser();
 
   return (
     <div className="min-h-screen text-foreground flex flex-col" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
@@ -32,8 +34,12 @@ export function Shell({ children }: ShellProps) {
                 Create
             </Link>
 
-            <span className="hidden md:inline font-medium ml-4">Berrybr</span>
-            <div className="h-10 w-10 rounded-full bg-white/80" />
+            <div className="flex items-center gap-2 ml-4">
+              <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <span className="hidden md:inline font-medium">{username || "Guest"}</span>
+            </div>
         </div>
       </header>
       
