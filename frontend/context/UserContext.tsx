@@ -11,6 +11,7 @@ interface UserContextType {
   login: (username: string) => Promise<{ ok: boolean; error?: string }>;
   logout: () => void;
   refreshSession: () => Promise<boolean>;
+  fetchWithAuth: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -143,6 +144,42 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return true;
   }, [fetchCurrentUser, persistSession, refreshToken]);
 
+  const fetchWithAuth = useCallback(
+    async (input: RequestInfo | URL, init: RequestInit = {}) => {
+      if (!accessToken) {
+        throw new Error("Missing access token");
+      }
+
+      const headers = new Headers(init.headers || {});
+      headers.set("Authorization", `Bearer ${accessToken}`);
+
+      const response = await fetch(input, {
+        ...init,
+        headers,
+      });
+
+      if (response.status !== 401) {
+        return response;
+      }
+
+      const refreshed = await refreshSession();
+      if (!refreshed) {
+        logout();
+        return response;
+      }
+
+      const refreshedToken = localStorage.getItem(STORAGE_KEYS.accessToken) || accessToken;
+      const retryHeaders = new Headers(init.headers || {});
+      retryHeaders.set("Authorization", `Bearer ${refreshedToken}`);
+
+      return fetch(input, {
+        ...init,
+        headers: retryHeaders,
+      });
+    },
+    [accessToken, refreshSession, logout]
+  );
+
   const login = useCallback(
     async (usernameInput: string) => {
       if (!usernameInput.trim()) {
@@ -180,7 +217,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
 
         return { ok: true };
-      } catch (error) {
+      } catch {
         return { ok: false, error: "Network error. Please try again." };
       } finally {
         setIsAuthenticating(false);
@@ -230,6 +267,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         refreshSession,
+        fetchWithAuth,
       }}
     >
       {children}

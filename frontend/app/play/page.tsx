@@ -9,7 +9,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { QuestionBuilder, Question } from "@/components/QuestionBuilder";
 import { Button } from "@/components/ui/Button";
 import { useUser } from "@/context/UserContext";
-import { useGame } from "@/context/GameContext";
 
 const ANSWER_ICONS = [
   <Waves key="wave" className="w-16 h-16 md:w-24 md:h-24 fill-current" />,
@@ -21,30 +20,65 @@ const ANSWER_ICONS = [
 export default function PlayPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { username } = useUser();
-  const { currentQuiz } = useGame();
-  const currentQuestionNum = parseInt(searchParams.get("q") || "1");
-  const totalQuestions = currentQuiz?.questions.length || parseInt(searchParams.get("total") || "1");
-  const currentQuestion = currentQuiz?.questions[currentQuestionNum - 1];
-  
+  const { username, fetchWithAuth } = useUser();
+  const pin = searchParams.get("pin") || searchParams.get("code") || "";
+
+  const [question, setQuestion] = useState<Question | null>(null);
+  const [timeRemainingMs, setTimeRemainingMs] = useState<number | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
   const [gameState, setGameState] = useState<'waiting' | 'playing' | 'adding_question'>('waiting');
 
   useEffect(() => {
-    if (gameState !== 'waiting') return;
-    
-    // Simulate waiting for host to start game - Longer wait now to allow adding questions
-    const timer = setTimeout(() => {
-      setGameState('playing');
-    }, 10000); // 10 seconds wait
+    if (!pin) return;
+    let mounted = true;
+    const pollQuestion = async () => {
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/question`);
+      const payload = await response.json();
+      if (!mounted) return;
+      if (response.ok) {
+        setQuestion(payload.data.question);
+        setTimeRemainingMs(payload.data.timeRemainingMs ?? null);
+        setCurrentQuestionIndex(payload.data.currentQuestionIndex ?? 0);
+        setTotalQuestions(payload.data.totalQuestions ?? 0);
 
-    return () => clearTimeout(timer);
-  }, [gameState]);
+        if (payload.data.state === "QUESTION_ACTIVE") {
+          setGameState('playing');
+        } else if (payload.data.state === "LOBBY") {
+          setGameState('waiting');
+        } else if (payload.data.state === "PROCESSING" || payload.data.state === "LEADERBOARD") {
+          router.push(`/play/leaderboard?pin=${pin}&q=${currentQuestionIndex + 1}&total=${totalQuestions}`);
+        }
+      }
+    };
+
+    const interval = setInterval(pollQuestion, 1000);
+    void pollQuestion();
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [pin, fetchWithAuth, router, currentQuestionIndex, totalQuestions]);
 
   const handleAnswer = (selectedIndex: number) => {
-    const isCorrect = currentQuestion ? selectedIndex === currentQuestion.correctAnswer : false;
-    // Calculate points based on speed (simulated)
-    const points = isCorrect ? Math.floor(Math.random() * 500) + 500 : 0;
-    router.push(`/play/leaderboard?q=${currentQuestionNum}&total=${totalQuestions}&points=${points}&correct=${isCorrect}`);
+    if (!pin) return;
+    fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/answer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answerIndex: selectedIndex }),
+    })
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload?.message || "Failed to submit answer");
+        }
+        const points = payload.data?.points || 0;
+        const isCorrect = payload.data?.isCorrect || false;
+        router.push(`/play/leaderboard?pin=${pin}&q=${currentQuestionIndex + 1}&total=${totalQuestions}&points=${points}&correct=${isCorrect}`);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   };
 
   const handleSuggestQuestion = () => {
@@ -52,10 +86,32 @@ export default function PlayPage() {
   };
 
   const handleQuestionAdded = (q: Question) => {
-    // In a real app, this would send the suggestion to the server
-    console.log("Suggestion added:", q);
-    alert("Thanks for your suggestion! The host might include it.");
-    setGameState('waiting');
+    if (!pin) return;
+    fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/quiz/game/${pin}/questions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: q.text,
+        category: q.category,
+        author: q.author,
+        type: q.type,
+        timeLimitSeconds: q.timeLimitSeconds,
+        pointsMultiplier: q.pointsMultiplier,
+        options: q.options,
+        correctOptionIndex: q.correctOptionIndex,
+      }),
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload?.message || "Failed to submit question");
+        }
+        alert("Thanks for your suggestion! The host might include it.");
+        setGameState('waiting');
+      })
+      .catch((error) => {
+        alert(error?.message || "Failed to submit question");
+      });
   };
 
   return (
@@ -152,15 +208,22 @@ export default function PlayPage() {
                         animate={{ scale: 1, opacity: 1 }}
                         className="bg-white p-8 rounded-2xl shadow-lg max-w-2xl w-full text-center min-h-50 flex items-center justify-center"
                     >
-                        <h2 className="text-4xl font-black text-black">
-                          {currentQuestion?.question || "Loading question..."}
-                        </h2>
+                        <div className="space-y-4">
+                          <h2 className="text-4xl font-black text-black">
+                            {question?.text || "Loading question..."}
+                          </h2>
+                          {timeRemainingMs !== null && (
+                            <p className="text-sm font-bold text-[#666]">
+                              Time left: {Math.ceil(timeRemainingMs / 1000)}s
+                            </p>
+                          )}
+                        </div>
                     </motion.div>
                  </div>
 
                  {/* Answer Grid */}
                  <div className="w-full max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4 h-auto sm:h-96 pb-8">
-                    {currentQuestion?.options.map((option, index) => (
+                    {question?.options.map((option, index) => (
                       <GameButton 
                         key={index}
                         onClick={() => handleAnswer(index)}

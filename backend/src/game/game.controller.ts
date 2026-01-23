@@ -72,6 +72,16 @@ export class GameController {
     };
   }
 
+  @Get(":pin/players")
+  getPlayers(@Param("pin") pin: string) {
+    const players = this.gameService.getPlayers(pin);
+    return {
+      message: "Players retrieved",
+      status: HttpStatus.OK,
+      data: players,
+    };
+  }
+
   @Post(":pin/join")
   joinGame(
     @Param("pin") pin: string,

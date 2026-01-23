@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useGame } from "@/context/GameContext";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Check, X, User, ArrowLeft, Home } from "lucide-react";
+import { Check, User, ArrowLeft, Home } from "lucide-react";
 
 export default function ReviewQuestionsPage() {
   const { currentQuiz } = useGame();
@@ -87,7 +87,7 @@ export default function ReviewQuestionsPage() {
               Question Review
             </h1>
             <p className="text-lg text-[#666]">
-              {currentQuiz.name} • {currentQuiz.questions.length} Questions
+              {currentQuiz.title} • {currentQuiz.questions.length} Questions
             </p>
           </motion.div>
 
@@ -109,11 +109,11 @@ export default function ReviewQuestionsPage() {
                       </div>
                       <span className="font-bold text-lg">Question {qIndex + 1}</span>
                     </div>
-                    {question.creator && (
+                    {question.author && (
                       <div className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full">
                         <User className="w-4 h-4" />
                         <span className="text-sm font-medium">
-                          Created by: {question.creator}
+                          Created by: {question.author}
                         </span>
                       </div>
                     )}
@@ -122,13 +122,13 @@ export default function ReviewQuestionsPage() {
                   {/* Question Content */}
                   <div className="p-6">
                     <h3 className="text-2xl font-bold text-[#1a1a1a] mb-6">
-                      {question.question}
+                      {question.text}
                     </h3>
 
                     {/* Answer Options */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {question.options.map((option, optIndex) => {
-                        const isCorrect = optIndex === question.correctAnswer;
+                        const isCorrect = optIndex === question.correctOptionIndex;
                         return (
                           <div
                             key={optIndex}

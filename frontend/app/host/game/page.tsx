@@ -1,11 +1,11 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Droplets, User, Waves, Hand } from "lucide-react";
+import { User, Waves, Hand } from "lucide-react";
 import Link from 'next/link';
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { useGame } from "@/context/GameContext";
+import { useUser } from "@/context/UserContext";
 
 const ANSWER_ICONS = [
   <Waves key="wave" className="w-12 h-12 fill-current" />,
@@ -17,54 +17,61 @@ const ANSWER_ICONS = [
 export default function HostGamePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentQuestionNum = parseInt(searchParams.get("q") || "1");
-  const totalQuestions = parseInt(searchParams.get("total") || "1");
-  
-  const { currentQuiz, setCurrentQuestionIndex } = useGame();
-  const currentQuestion = currentQuiz?.questions[currentQuestionNum - 1];
-  
-  const [gameState, setGameState] = useState<'reading' | 'answering'>('reading');
-  const [timeLeft, setTimeLeft] = useState(10);
+  const pin = searchParams.get("pin") || "";
+  const { fetchWithAuth } = useUser();
 
-  // Set the current question index in context
+  interface GameQuestion {
+    text: string;
+    options: string[];
+    correctOptionIndex?: number;
+    category?: string;
+  }
+
+  const [question, setQuestion] = useState<GameQuestion | null>(null);
+  const [timeRemainingMs, setTimeRemainingMs] = useState<number | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
+  const [gameState, setGameState] = useState<string>("LOBBY");
+
   useEffect(() => {
-    setCurrentQuestionIndex(currentQuestionNum - 1);
-  }, [currentQuestionNum, setCurrentQuestionIndex]);
+    if (!pin) return;
+    let mounted = true;
+    const pollQuestion = async () => {
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/question`);
+      const payload = await response.json();
+      if (!mounted) return;
+      if (response.ok) {
+        setQuestion(payload.data.question);
+        setTimeRemainingMs(payload.data.timeRemainingMs ?? null);
+        setCurrentQuestionIndex(payload.data.currentQuestionIndex ?? 0);
+        setTotalQuestions(payload.data.totalQuestions ?? 0);
+        setGameState(payload.data.state || "LOBBY");
+        if (payload.data.state === "PROCESSING") {
+          router.push(`/host/leaderboard?pin=${pin}`);
+        }
+      }
+    };
 
-  // Initial sequence: Read question (5s) -> Answer phase (starts timer)
-  useEffect(() => {
-    if (gameState === 'reading') {
-        const timer = setTimeout(() => {
-            setGameState('answering');
-        }, 5000); // 5 seconds to read
-        return () => clearTimeout(timer);
-    }
-  }, [gameState]);
+    const interval = setInterval(pollQuestion, 1000);
+    void pollQuestion();
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [pin, fetchWithAuth, router]);
 
-  // Timer logic - only runs during 'answering'
-  useEffect(() => {
-    if (gameState === 'answering' && timeLeft > 0) {
-        const timer = setInterval(() => {
-            setTimeLeft((prev) => prev - 1);
-        }, 1000);
-        return () => clearInterval(timer);
-    }
-    // Auto-advance when time is up - go to leaderboard
-    if (timeLeft === 0) {
-        router.push(`/host/leaderboard?q=${currentQuestionNum}&total=${totalQuestions}`);
-    }
-  }, [gameState, timeLeft, router, currentQuestionNum, totalQuestions]);
-
-  const handleManualNext = () => {
-    router.push(`/host/leaderboard?q=${currentQuestionNum}&total=${totalQuestions}`);
+  const handleManualNext = async () => {
+    if (!pin) return;
+    await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/question/end`, { method: "POST" });
+    await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/leaderboard/show`, { method: "POST" });
+    router.push(`/host/leaderboard?pin=${pin}`);
   };
 
-  // If no quiz loaded, show loading or redirect
-  if (!currentQuiz || !currentQuestion) {
+  if (!pin) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
         <div className="bg-white p-8 rounded-2xl shadow-lg text-center">
-          <h2 className="text-2xl font-bold mb-4">No quiz loaded</h2>
+          <h2 className="text-2xl font-bold mb-4">No game PIN provided</h2>
           <Link href="/home" className="text-blue-500 underline">Go back home</Link>
         </div>
       </div>
@@ -85,7 +92,7 @@ export default function HostGamePage() {
                 </div>
 
                 <div className="flex flex-col items-center">
-                    <span className="text-xs font-bold uppercase tracking-widest text-white/70">Question {currentQuestionNum} of {totalQuestions}</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-white/70">Question {currentQuestionIndex + 1} of {totalQuestions}</span>
                 </div>
                     
                 <div className="flex items-center gap-4">
@@ -120,10 +127,10 @@ export default function HostGamePage() {
                 >
                 <div className="space-y-6">
                     <span className="inline-block px-4 py-1 bg-black text-white text-sm font-bold uppercase tracking-widest rounded-full mb-4">
-                        {currentQuiz.name}
+                        {question?.category || "Question"}
                     </span>
-                    <h1 className={`${gameState === 'answering' ? 'text-4xl' : 'text-5xl md:text-7xl'} font-black tracking-tight text-[#1a1a1a] leading-tight transition-all duration-500`}>
-                        {currentQuestion.question}
+                      <h1 className={`${gameState === 'QUESTION_ACTIVE' ? 'text-4xl' : 'text-5xl md:text-7xl'} font-black tracking-tight text-[#1a1a1a] leading-tight transition-all duration-500`}>
+                        {question?.text || "Waiting for question..."}
                     </h1>
                 </div>
             </motion.div>
@@ -131,7 +138,7 @@ export default function HostGamePage() {
 
         {/* Answer Options - Only revealed in 'answering' state */}
         <AnimatePresence>
-            {gameState === 'answering' && (
+              {gameState === 'QUESTION_ACTIVE' && question && (
                  <motion.div 
                     initial={{ y: 200, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -139,13 +146,17 @@ export default function HostGamePage() {
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     className="w-full max-w-7xl grid grid-cols-2 gap-4 h-64"
                  >
-                    {currentQuestion.options.map((option, index) => (
+                    {question.options.map((option: string, index: number) => (
                       <AnswerCard 
                         key={index}
                         icon={ANSWER_ICONS[index % ANSWER_ICONS.length]} 
                         label={option} 
                         color="bg-[#A59A9A]"
-                        isCorrect={index === currentQuestion.correctAnswer}
+                        isCorrect={
+                          typeof question.correctOptionIndex === "number"
+                            ? index === question.correctOptionIndex
+                            : false
+                        }
                       />
                     ))}
                  </motion.div>
@@ -154,14 +165,14 @@ export default function HostGamePage() {
 
         {/* Timer - Only active in 'answering' state */}
         <div className="absolute left-8 bottom-8 md:scale-125 origin-bottom-left">
-            {gameState === 'answering' && (
+              {gameState === 'QUESTION_ACTIVE' && (
                  <motion.div 
                     initial={{ scale: 0 }} 
                     animate={{ scale: 1 }}
                     className="w-24 h-24 rounded-full bg-[#3D3030] border-8 border-[#A59A9A] flex items-center justify-center shadow-lg"
                 >
-                    <span className={`text-4xl font-black ${timeLeft <= 5 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
-                        {timeLeft}
+                    <span className={`text-4xl font-black ${timeRemainingMs !== null && timeRemainingMs <= 5000 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                      {timeRemainingMs !== null ? Math.ceil(timeRemainingMs / 1000) : "--"}
                     </span>
                 </motion.div>
             )}

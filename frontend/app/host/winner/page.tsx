@@ -6,9 +6,35 @@ import Image from "next/image";
 import { Crown, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useUser } from "@/context/UserContext";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function WinnerPage() {
-    const { username } = useUser();
+    const { username, fetchWithAuth } = useUser();
+    const searchParams = useSearchParams();
+    const pin = searchParams.get("pin") || "";
+    const [leaders, setLeaders] = useState<string[]>(["Player 1", "Player 2", "Player 3"]);
+
+    useEffect(() => {
+        if (!pin) return;
+        let mounted = true;
+        const loadLeaderboard = async () => {
+            const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/leaderboard?limit=3`);
+            const payload = await response.json();
+            if (mounted && response.ok) {
+                const entries = payload.data.entries || [];
+                setLeaders([
+                    entries[0]?.nickname || "Player 1",
+                    entries[1]?.nickname || "Player 2",
+                    entries[2]?.nickname || "Player 3",
+                ]);
+            }
+        };
+        void loadLeaderboard();
+        return () => {
+            mounted = false;
+        };
+    }, [pin, fetchWithAuth]);
   // Winner Page Implementation
   return (
     <div className="min-h-screen w-full flex flex-col overflow-hidden" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
@@ -50,7 +76,7 @@ export default function WinnerPage() {
                     transition={{ delay: 1.4 }}
                     className="mb-4 text-center"
                 >
-                    <span className="text-xl font-bold text-[#444] block">Player 3</span>
+                    <span className="text-xl font-bold text-[#444] block">{leaders[2]}</span>
                  </motion.div>
                  <motion.div 
                     initial={{ height: 0 }}
@@ -79,7 +105,7 @@ export default function WinnerPage() {
                     transition={{ delay: 1.2 }}
                     className="mb-4 text-center"
                 >
-                    <span className="text-2xl font-black text-[#222] block">Mhiki</span>
+                    <span className="text-2xl font-black text-[#222] block">{leaders[0]}</span>
                  </motion.div>
 
                  <motion.div 
@@ -98,7 +124,7 @@ export default function WinnerPage() {
                     transition={{ delay: 1.3 }}
                     className="mb-4 text-center"
                 >
-                    <span className="text-xl font-bold text-[#444] block">Player 2</span>
+                    <span className="text-xl font-bold text-[#444] block">{leaders[1]}</span>
                  </motion.div>
                  <motion.div 
                     initial={{ height: 0 }}
