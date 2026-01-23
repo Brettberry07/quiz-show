@@ -1,65 +1,89 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useUser } from "@/context/UserContext";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [usernameInput, setUsernameInput] = useState("");
+  const { setUsername } = useUser();
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!usernameInput.trim()) return;
+    setLoading(true);
+    setUsername(usernameInput.trim());
+    // Simulate network delay
+    setTimeout(() => {
+        router.push("/home");
+    }, 800);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen w-full text-[#111]" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
+      {/* Top Bar - Same as Shell */}
+      <header className="sticky top-0 z-40 w-full  bg-[#3D3030] text-white h-16 flex items-center justify-between px-6 shadow-md">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <img src="/text.svg" alt="QuizSink Logo" className="w-36 h-36" />
+
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </header>
+
+      {/* Main Content */}
+      <main className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center px-6 py-14">
+        
+        {/* Animated Container */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="w-full max-w-2xl"
+        >
+          
+        <div className="bg-white rounded-lg shadow-lg p-8 ">
+        <div className="mb-8 text-center">
+          <img src="/QuizSink.svg" alt="QuizSink Logo" className="w-90 mx-auto" />
+        </div>
+
+        <Card className="border-none bg-[#A59A9A] p-6 shadow-xl rounded-md">
+          <form onSubmit={handleLogin} className="space-y-4">
+          
+          <div className="space-y-2">
+            <Input
+            type="text"
+            placeholder="Username"
+            value={usernameInput}
+            onChange={(e) => setUsernameInput(e.target.value)}
+            className="h-14 rounded-md border-b-4 border-[#cfcfcf] bg-[#e5e5e5] px-4 text-center text-xl font-bold text-[#555] placeholder:text-[#999] focus-visible:ring-0 focus-visible:border-[#555] transition-all"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
+
+          <div className="pt-2">
+            <Button
+            type="submit"
+            disabled={loading}
+            className="h-14 w-full rounded-md border-b-4 border-[#111] bg-[#202020] text-xl font-bold text-white hover:bg-[#222] hover:border-black active:border-b-0 active:translate-y-1 transition-all disabled:opacity-70"
+            >
+            <span className="flex items-center justify-center">
+          {loading ? "Logging in..." : "Login"}
+            </span>
+            </Button>
+          </div>
+
+          </form>
+        </Card>
         </div>
+        </motion.div>
       </main>
     </div>
   );
 }
+
