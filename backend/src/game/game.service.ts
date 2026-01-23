@@ -188,9 +188,9 @@ export class GameService {
 	/**
 	 * Advance to the next question
 	 */
-	nextQuestion(pin: string): void {
+	nextQuestion(pin: string): boolean {
 		const game = this.getGame(pin);
-		game.nextQuestion((pin) => this.endCurrentQuestion(pin));
+		return game.nextQuestion((pin) => this.endCurrentQuestion(pin));
 	}
 
 	/**

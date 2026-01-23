@@ -393,6 +393,37 @@ export class Game {
 	}
 
 	/**
+	 * Get current question index (0-based). Returns -1 if not started.
+	 */
+	getCurrentQuestionIndex(): number {
+		return this.currentQuestionIndex;
+	}
+
+	/**
+	 * Get total number of questions
+	 */
+	getTotalQuestions(): number {
+		return this.quizData.questions.length;
+	}
+
+	/**
+	 * Get remaining time (ms) for the active question, including grace window
+	 */
+	getTimeRemainingMs(): number | null {
+		if (this.state !== GameState.QUESTION_ACTIVE || !this.questionStartTime) {
+			return null;
+		}
+		const currentQuestion = this.getCurrentQuestionInternal();
+		if (!currentQuestion) return null;
+
+		const elapsedNs = process.hrtime.bigint() - this.questionStartTime;
+		const elapsedMs = Number(elapsedNs) / 1_000_000;
+		const totalMs = (currentQuestion.timeLimitSeconds * 1000) + this.scoreConfig.graceWindowMs;
+		const remaining = Math.max(0, Math.floor(totalMs - elapsedMs));
+		return remaining;
+	}
+
+	/**
 	 * Get current question with answer (server-side only for validation)
 	 * @internal Used only by internal game logic for answer checking
 	 */

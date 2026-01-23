@@ -1,5 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { GameService } from './game.service';
+import { GameController } from './game.controller';
+import { QuizModule } from '../quiz/quiz.module';
+import { AuthModule } from '../auth/auth.module';
 
 /**
  * GameModule - Core Game Domain
@@ -16,6 +19,8 @@ import { GameService } from './game.service';
  * - QuizModule (for quiz data)
  */
 @Module({
+	imports: [forwardRef(() => QuizModule), AuthModule],
+	controllers: [GameController],
 	providers: [GameService],
 	exports: [GameService],
 })
