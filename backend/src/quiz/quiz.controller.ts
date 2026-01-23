@@ -57,11 +57,11 @@ export class QuizController {
      * }
      */
     @Post()
-    createQuiz(
+    async createQuiz(
         @Body() createQuizDto: CreateQuizDto,
         @Request() req: AuthenticatedRequest,
     ) {
-        const quiz = this.quizService.createQuiz(createQuizDto, req.user.id);
+        const quiz = await this.quizService.createQuiz(createQuizDto, req.user.id, req.user.username);
         return {
             message: 'Quiz created successfully',
             status: HttpStatus.CREATED,
@@ -75,8 +75,8 @@ export class QuizController {
      * @returns Array of quiz summaries
      */
     @Get()
-    findAll() {
-        const quizzes = this.quizService.findAll();
+    async findAll() {
+        const quizzes = await this.quizService.findAll();
         return {
             message: 'Quizzes retrieved successfully',
             status: HttpStatus.OK,
@@ -91,8 +91,8 @@ export class QuizController {
      * @returns Array of quiz summaries owned by the user
      */
     @Get('my')
-    findMyQuizzes(@Request() req: AuthenticatedRequest) {
-        const quizzes = this.quizService.findAllByHost(req.user.id);
+    async findMyQuizzes(@Request() req: AuthenticatedRequest) {
+        const quizzes = await this.quizService.findAllByHost(req.user.id);
         return {
             message: 'Your quizzes retrieved successfully',
             status: HttpStatus.OK,
@@ -106,11 +106,11 @@ export class QuizController {
      * @returns Statistics about quizzes in the system
      */
     @Get('stats')
-    getStats() {
+    async getStats() {
         return {
             message: 'Quiz statistics retrieved',
             status: HttpStatus.OK,
-            data: this.quizService.getStats(),
+            data: await this.quizService.getStats(),
         };
     }
 
@@ -121,8 +121,8 @@ export class QuizController {
      * @returns Validation result
      */
     @Get(':id/validate')
-    validateQuiz(@Param('id') id: string) {
-        const validation = this.quizService.validateForGame(id);
+    async validateQuiz(@Param('id') id: string) {
+        const validation = await this.quizService.validateForGame(id);
         return {
             message: validation.valid ? 'Quiz is valid' : 'Quiz validation failed',
             status: HttpStatus.OK,
@@ -139,11 +139,11 @@ export class QuizController {
      * @returns The quiz object (answers hidden unless you're the host)
      */
     @Get(':id')
-    findOne(
+    async findOne(
         @Param('id') id: string,
         @Request() req: AuthenticatedRequest,
     ) {
-        const quiz = this.quizService.findOneForClient(id, req.user.id);
+        const quiz = await this.quizService.findOneForClient(id, req.user.id);
         return {
             message: 'Quiz retrieved successfully',
             status: HttpStatus.OK,
@@ -163,12 +163,12 @@ export class QuizController {
      * @returns The updated quiz
      */
     @Patch(':id')
-    updateQuiz(
+    async updateQuiz(
         @Param('id') id: string,
         @Body() updateQuizDto: UpdateQuizDto,
         @Request() req: AuthenticatedRequest,
     ) {
-        const quiz = this.quizService.update(id, updateQuizDto, req.user.id);
+        const quiz = await this.quizService.update(id, updateQuizDto, req.user.id);
         return {
             message: 'Quiz updated successfully',
             status: HttpStatus.OK,
@@ -185,12 +185,12 @@ export class QuizController {
      * @returns The created question
      */
     @Post(':id/questions')
-    addQuestion(
+    async addQuestion(
         @Param('id') id: string,
         @Body() addQuestionDto: AddQuestionDto,
         @Request() req: AuthenticatedRequest,
     ) {
-        const question = this.quizService.addQuestion(id, addQuestionDto, req.user.id);
+        const question = await this.quizService.addQuestion(id, addQuestionDto, req.user.id, req.user.username);
         return {
             message: 'Question added successfully',
             status: HttpStatus.CREATED,
@@ -208,7 +208,7 @@ export class QuizController {
      * @returns The created question
      */
     @Post('game/:pin/questions')
-    addQuestionToGame(
+    async addQuestionToGame(
         @Param('pin') pin: string,
         @Body() addQuestionDto: AddQuestionDto,
         @Request() req: AuthenticatedRequest,
@@ -217,7 +217,7 @@ export class QuizController {
         const quizId = this.gameService.validatePlayerQuestionContribution(pin, req.user.id);
         
         // Add the question to the quiz permanently
-        const question = this.quizService.addQuestionForGamePlayer(quizId, addQuestionDto, req.user.id);
+        const question = await this.quizService.addQuestionForGamePlayer(quizId, addQuestionDto, req.user.id, req.user.username);
         
         return {
             message: 'Question contributed successfully to the game',
@@ -236,12 +236,12 @@ export class QuizController {
      */
     @Delete(':id/questions/:questionId')
     @HttpCode(HttpStatus.OK)
-    removeQuestion(
+    async removeQuestion(
         @Param('id') id: string,
         @Param('questionId') questionId: string,
         @Request() req: AuthenticatedRequest,
     ) {
-        const removed = this.quizService.removeQuestion(id, questionId, req.user.id);
+        const removed = await this.quizService.removeQuestion(id, questionId, req.user.id);
         return {
             message: removed ? 'Question removed successfully' : 'Question not found',
             status: HttpStatus.OK,
@@ -258,11 +258,11 @@ export class QuizController {
      */
     @Delete(':id')
     @HttpCode(HttpStatus.OK)
-    deleteQuiz(
+    async deleteQuiz(
         @Param('id') id: string,
         @Request() req: AuthenticatedRequest,
     ) {
-        const quiz = this.quizService.remove(id, req.user.id);
+        const quiz = await this.quizService.remove(id, req.user.id);
         return {
             message: 'Quiz deleted successfully',
             status: HttpStatus.OK,

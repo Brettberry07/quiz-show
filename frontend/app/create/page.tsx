@@ -10,12 +10,15 @@ import { Check, Trash2, Save, Layout, Type, User } from "lucide-react";
 import { QuestionBuilder, Question } from "@/components/QuestionBuilder";
 import { useQuizzes } from "@/context/QuizContext";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 
 export default function CreatePage() {
   const [quizName, setQuizName] = useState("");
   const [description, setDescription] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [saving, setSaving] = useState(false);
   const { addQuiz, updateQuiz, getQuiz } = useQuizzes();
+  const { username } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("edit");
@@ -23,14 +26,21 @@ export default function CreatePage() {
 
   // Load quiz data when editing
   useEffect(() => {
-    if (editId) {
-      const quiz = getQuiz(editId);
-      if (quiz) {
-        setQuizName(quiz.name);
-        setDescription(quiz.description);
+    if (!editId) return;
+    let mounted = true;
+    const loadQuiz = async () => {
+      const quiz = await getQuiz(editId);
+      if (quiz && mounted) {
+        setQuizName(quiz.title);
+        setDescription("");
         setQuestions(quiz.questions);
       }
-    }
+    };
+
+    void loadQuiz();
+    return () => {
+      mounted = false;
+    };
   }, [editId, getQuiz]);
 
   const handleAddQuestion = (newQuestion: Question) => {
@@ -41,7 +51,7 @@ export default function CreatePage() {
     setQuestions(questions.filter(q => q.id !== id));
   };
 
-  const handleSubmitQuiz = () => {
+  const handleSubmitQuiz = async () => {
     if (!quizName.trim()) {
       alert("Please enter a quiz name");
       return;
@@ -52,22 +62,28 @@ export default function CreatePage() {
       return;
     }
 
-    if (isEditing && editId) {
-      updateQuiz(editId, {
-        name: quizName,
-        description,
-        questions,
-      });
-    } else {
-      addQuiz({
-        name: quizName,
-        description,
-        questions,
-      });
-    }
+    setSaving(true);
+    try {
+      if (isEditing && editId) {
+        await updateQuiz(editId, {
+          title: quizName,
+          questions,
+        });
+      } else {
+        await addQuiz({
+          title: quizName,
+          questions,
+        });
+      }
 
-    // Redirect to home page after saving
-    router.push("/home");
+      // Redirect to home page after saving
+      router.push("/home");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to save quiz";
+      alert(message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -85,10 +101,11 @@ export default function CreatePage() {
           </div>
           <Button
             onClick={handleSubmitQuiz}
+            disabled={saving}
             className="bg-[#202020] hover:bg-[#333] text-white font-bold px-6 py-2 rounded-lg shadow-sm border-b-4 border-[#111] active:border-b-0 active:translate-y-1 transition-all"
           >
             <Save className="w-4 h-4 mr-2" />
-            {isEditing ? "Update Quiz" : "Save Quiz"}
+            {saving ? "Saving..." : isEditing ? "Update Quiz" : "Save Quiz"}
           </Button>
         </div>
 
@@ -139,7 +156,7 @@ export default function CreatePage() {
               <h2 className="text-2xl font-black text-[#3D3030]">Add Question</h2>
             </div>
             
-            <QuestionBuilder onAddQuestion={handleAddQuestion} creatorName="Me" />
+            <QuestionBuilder onAddQuestion={handleAddQuestion} creatorName={username || "Me"} />
           </motion.div>
 
           {/* Question List */}
@@ -161,11 +178,11 @@ export default function CreatePage() {
                       
                       <div className="flex-1 min-w-0 space-y-3">
                         <div className="flex items-center gap-2">
-                           <p className="font-bold text-[#3D3030] text-lg">{q.question}</p>
-                           {q.creator && (
+                           <p className="font-bold text-[#3D3030] text-lg">{q.text}</p>
+                           {q.author && (
                              <span className="text-xs font-bold bg-[#A59A9A] text-[#3D3030] px-2 py-0.5 rounded-full border border-[#8B8080] flex items-center gap-1">
                                <User className="w-3 h-3" />
-                               {q.creator}
+                               {q.author}
                              </span>
                            )}
                         </div>
@@ -173,11 +190,11 @@ export default function CreatePage() {
                         <div className="grid grid-cols-2 gap-2">
                           {q.options.map((opt, optIndex) => (
                             <div key={optIndex} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border ${
-                              optIndex === q.correctAnswer 
+                              optIndex === q.correctOptionIndex 
                                 ? 'bg-green-50 border-green-200 text-green-700' 
                                 : 'bg-[#e5e5e5] border-[#cfcfcf] text-[#555]'
                             }`}>
-                              {optIndex === q.correctAnswer && <Check className="w-4 h-4 shrink-0" />}
+                              {optIndex === q.correctOptionIndex && <Check className="w-4 h-4 shrink-0" />}
                               <span className="truncate">{opt}</span>
                             </div>
                           ))}

@@ -32,6 +32,8 @@ export interface CachedQuiz {
 export interface CachedQuestion {
 	id: string;
 	text: string;
+	category?: string;
+	author?: string;
 	type: QuestionType;
 	timeLimitSeconds: number;
 	pointsMultiplier: number;
@@ -142,4 +144,5 @@ export interface SubmitAnswerOptions {
 export interface PlayerJoinResult {
 	playerId: string;
 	player: PlayerState;
+	rejoined?: boolean;
 }

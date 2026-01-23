@@ -45,6 +45,14 @@ export class UpdateQuestionDto {
   @IsOptional()
   text?: string;
 
+  @IsString({ message: "Category must be a string" })
+  @IsOptional()
+  category?: string;
+
+  @IsString({ message: "Author must be a string" })
+  @IsOptional()
+  author?: string;
+
   @IsEnum(QuestionType, { message: "Invalid question type" })
   @IsOptional()
   type?: QuestionType;
@@ -79,6 +87,14 @@ export class AddQuestionDto {
   @IsString({ message: "Question text must be a string" })
   @IsNotEmpty({ message: "Question text is required" })
   text: string;
+
+  @IsString({ message: "Category must be a string" })
+  @IsOptional()
+  category?: string;
+
+  @IsString({ message: "Author must be a string" })
+  @IsOptional()
+  author?: string;
 
   @IsEnum(QuestionType, { message: "Invalid question type" })
   type: QuestionType;

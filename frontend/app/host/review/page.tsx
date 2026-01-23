@@ -2,13 +2,41 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useGame } from "@/context/GameContext";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Check, X, User, ArrowLeft, Home } from "lucide-react";
+import { Check, User, ArrowLeft, Home } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useUser } from "@/context/UserContext";
+import { useEffect, useState } from "react";
+import { Quiz } from "@/context/QuizContext";
 
 export default function ReviewQuestionsPage() {
-  const { currentQuiz } = useGame();
+  const searchParams = useSearchParams();
+  const pin = searchParams.get("pin") || "";
+  const { fetchWithAuth } = useUser();
+  const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
+
+  useEffect(() => {
+    if (!pin) return;
+    let mounted = true;
+    const loadQuiz = async () => {
+      const statusResponse = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}`);
+      const statusPayload = await statusResponse.json();
+      const quizId = statusPayload?.data?.quizId;
+      if (!quizId || !mounted) return;
+
+      const quizResponse = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/quiz/${quizId}`);
+      const quizPayload = await quizResponse.json();
+      if (quizResponse.ok && mounted) {
+        setCurrentQuiz(quizPayload.data);
+      }
+    };
+
+    void loadQuiz();
+    return () => {
+      mounted = false;
+    };
+  }, [pin, fetchWithAuth]);
 
   if (!currentQuiz) {
     return (
@@ -56,7 +84,7 @@ export default function ReviewQuestionsPage() {
           </Link>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/host/winner">
+          <Link href={`/host/winner?pin=${pin}`}>
             <Button
               variant="ghost"
               className="text-white hover:bg-white/10 flex items-center gap-2"
@@ -87,7 +115,7 @@ export default function ReviewQuestionsPage() {
               Question Review
             </h1>
             <p className="text-lg text-[#666]">
-              {currentQuiz.name} • {currentQuiz.questions.length} Questions
+              {currentQuiz.title} • {currentQuiz.questions.length} Questions
             </p>
           </motion.div>
 
@@ -109,11 +137,11 @@ export default function ReviewQuestionsPage() {
                       </div>
                       <span className="font-bold text-lg">Question {qIndex + 1}</span>
                     </div>
-                    {question.creator && (
+                    {question.author && (
                       <div className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full">
                         <User className="w-4 h-4" />
                         <span className="text-sm font-medium">
-                          Created by: {question.creator}
+                          Created by: {question.author}
                         </span>
                       </div>
                     )}
@@ -122,13 +150,13 @@ export default function ReviewQuestionsPage() {
                   {/* Question Content */}
                   <div className="p-6">
                     <h3 className="text-2xl font-bold text-[#1a1a1a] mb-6">
-                      {question.question}
+                      {question.text}
                     </h3>
 
                     {/* Answer Options */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {question.options.map((option, optIndex) => {
-                        const isCorrect = optIndex === question.correctAnswer;
+                        const isCorrect = optIndex === question.correctOptionIndex;
                         return (
                           <div
                             key={optIndex}
@@ -182,7 +210,7 @@ export default function ReviewQuestionsPage() {
             transition={{ delay: currentQuiz.questions.length * 0.1 + 0.2 }}
             className="mt-8 flex justify-center gap-4"
           >
-            <Link href="/host/winner">
+            <Link href={`/host/winner?pin=${pin}`}>
               <Button
                 variant="secondary"
                 className="bg-[#A59A9A] text-[#333] hover:bg-[#958A8A] font-bold px-8 py-3 h-auto border-b-4 border-[#857A7A] active:border-b-0 active:translate-y-1 transition-all"

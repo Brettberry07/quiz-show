@@ -1,0 +1,118 @@
+Feature checklist for a complete REST-based game API (end-to-end host → join → play → finish)
+
+Authentication
+Require JWT (Authorization: Bearer <token>) for all game endpoints.
+Use existing /login and /auth/refresh flows (return tokens on login).
+Ensure controllers read user id from JWT (req.user.id).
+Create game (host)
+POST /game
+Auth required (host)
+Body: { quizId: string }
+Behavior: validate quiz (QuizService.getQuizForGame), create game via GameService.createGame
+Response: { pin: string, state: 'LOBBY', playerCount: number, quizTitle, quizSummary }
+Errors: 400 if quiz invalid, 404 if quiz missing
+Get game summary / status
+GET /game/:pin
+Auth optional (guest/host)
+Response: { pin, state, playerCount, hostId, quizTitle, currentQuestionIndex? }
+Use for lobby page and polling.
+Join game (player)
+POST /game/:pin/join
+Auth required
+Body: { nickname: string, socketId?: string (optional for future) }
+Behavior: call GameService.addPlayer({ pin, userId, nickname, socketId })
+Response: { playerId, playerState: { id, nickname, totalScore, ... }, pin, quizTitle }
+Errors: 404 pin not found, 400 if closed
+Leave / Disconnect
+POST /game/:pin/leave
+Auth required
+Body empty
+Behavior: remove player mapping (GameService.removePlayer)
+Response: { ok: true }
+Start game (host)
+POST /game/:pin/start
+Auth required, host-only
+Body optional
+Behavior: GameService.startGame(pin) -> transitions LOBBY → QUESTION_ACTIVE and starts question timer
+Response: { ok: true, startedAt, firstQuestionIndex }
+Errors: 403 if not host, 400 if already started
+Poll current question (player)
+GET /game/:pin/question
+Auth optional
+Query: ?playerId=...
+Response (player view): { question: { id, text, options, timeLimitSeconds, pointsMultiplier }, state: 'reading'|'answering'|'ended', timeRemainingMs }
+For host, optionally include correctOptionIndex only after question ended.
+Submit answer
+POST /game/:pin/answer
+Auth required
+Body: { answerIndex: number }
+Behavior: GameService.submitAnswer({ pin, playerId, answerIndex }) -> returns ScoreResult
+Response: { points: number, isCorrect: boolean, elapsedMs, combo }
+Idempotency: accept only first valid submission per player per question; return 409 or existing score for duplicates
+Rate-limit / validation: verify answerIndex in range; return 400 for invalid
+End current question (host)
+POST /game/:pin/question/end
+Auth required, host-only or automatically via server timer
+Behavior: GameService.endCurrentQuestion -> calculates scores, prepares leaderboard
+Response: { ok: true, correctOptionIndex }
+Leaderboard / results
+GET /game/:pin/leaderboard?limit=5
+Auth optional
+Response: { entries: [{ playerId, nickname, score, rank }], questionIndex, totalQuestions }
+Advance to next question (host)
+POST /game/:pin/question/next
+Auth host-only
+Behavior: GameService.nextQuestion -> opens next question and starts timer
+Response: { nextQuestionIndex, totalQuestions }
+End game (host)
+POST /game/:pin/end
+Auth host-only
+Behavior: GameService.endGame + deleteGame or mark ended
+Response: final leaderboard
+Player-contributed question (lobby)
+POST /quiz/game/:pin/questions (already exists)
+Requirements: only allow when player is registered in service (must be called after join)
+Body: AddQuestionDto
+Response: created safe question
+Enforce: one contribution per player (GameService.validatePlayerQuestionContribution)
+Game lifecycle & timers (server-side)
+Server must manage question timers (start time, countdown) and transitions:
+reading → answering → processing → leaderboard
+Expose timeRemaining in question endpoint
+For REST: define recommended polling interval (e.g., 1s for UX) and TTLs
+Provide server-side canonical timestamps to avoid client clock issues
+Scoring contract
+Define deterministic scoring response:
+{ points, isCorrect, combo, elapsedMs, basePoints }
+Server is authoritative (clients only submit answerIndex)
+Concurrency / Idempotency
+Ensure submitAnswer is atomic and returns existing result for repeat submissions
+Use player per-question flag to prevent double scoring
+For REST, returns 409 (Conflict) on duplicate or 200 with same payload
+Error responses & status codes
+Common error object: { message, status, code?, details? }
+Use 401, 403, 404, 400, 409, 500 consistently
+In-memory vs persistent storage
+Either:
+Keep GameService in-memory (fast; ephemeral) — document that games reset on server restart
+Or persist sessions to DB (for reconnection / scaling)
+For REST-only mode, persistence is recommended for reliability
+Player reconnects
+POST /game/:pin/reconnect
+Auth required
+Body: { playerId, newSocketId? } — used if socket IDs are employed later
+Behavior: GameService.updatePlayerSocket
+Security & rate limiting
+Limit answer submissions per second per player
+Limit creation/join attempts per IP
+Validate request body strictly (use DTOs)
+Tests and docs
+Unit tests for GameController mapping to GameService
+E2E flow: host creates game, players join, host starts, players answer, leaderboard, finish
+API docs (OpenAPI) and sample request snippets for frontend
+Frontend integration notes
+Flow examples (sequence of calls) and sample payloads:
+Host: POST /game -> PIN -> navigate to /host?pin=XXX
+Player: POST /game/:pin/join -> store playerId locally -> poll GET /game/:pin/question
+Answer: POST /game/:pin/answer
+Poll leaderboard after question ends: GET /game/:pin/leaderboard?q=index

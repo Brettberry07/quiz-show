@@ -4,29 +4,77 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { useGame } from "@/context/GameContext";
 import { ArrowRight, Trophy, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useUser } from "@/context/UserContext";
 
-// Simulated player data with scores
-const SIMULATED_LEADERBOARD = [
-  { name: "QuizWhiz", score: 2450, previousRank: 2, change: "up" },
-  { name: "Big Brain", score: 2200, previousRank: 1, change: "down" },
-  { name: "FastFingers", score: 1980, previousRank: 3, change: "same" },
-  { name: "TriviaMaster", score: 1750, previousRank: 5, change: "up" },
-  { name: "KnowledgeKing", score: 1600, previousRank: 4, change: "down" },
-  { name: "SmartyPants", score: 1450, previousRank: 6, change: "same" },
-  { name: "Guesser", score: 1200, previousRank: 8, change: "up" },
-  { name: "TheWinner", score: 950, previousRank: 7, change: "down" },
-];
+interface LeaderboardEntry {
+  playerId: string;
+  nickname: string;
+  score: number;
+  rank: number;
+}
 
 export default function LeaderboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentQuestion = parseInt(searchParams.get("q") || "1");
-  const totalQuestions = parseInt(searchParams.get("total") || "12");
-  const isLastQuestion = currentQuestion >= totalQuestions;
+  const pin = searchParams.get("pin") || "";
+  const { fetchWithAuth } = useUser();
+  const { emitWithAck, connectSocket, onEvent, offEvent } = useGame();
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
+  const isLastQuestion = totalQuestions > 0 ? currentQuestionIndex + 1 >= totalQuestions : false;
   
   const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    if (!pin || pin.length !== 6) return;
+    let mounted = true;
+
+    const sync = async () => {
+      try {
+        await connectSocket();
+        const payload = await emitWithAck<{ data?: { leaderboard?: LeaderboardEntry[]; currentQuestionIndex?: number; totalQuestions?: number; state?: string } }>("sync_state", { pin });
+        if (!mounted) return;
+        const data = payload?.data ?? {};
+        if (data.leaderboard) setEntries(data.leaderboard);
+        setCurrentQuestionIndex(data.currentQuestionIndex ?? 0);
+        setTotalQuestions(data.totalQuestions ?? 0);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    const handleLeaderboard = (data: { entries?: LeaderboardEntry[]; currentQuestionIndex?: number; totalQuestions?: number }) => {
+      if (!mounted) return;
+      if (data.entries) setEntries(data.entries);
+      if (typeof data.currentQuestionIndex === "number") setCurrentQuestionIndex(data.currentQuestionIndex);
+      if (typeof data.totalQuestions === "number") setTotalQuestions(data.totalQuestions);
+    };
+
+    const handleQuestion = () => {
+      router.push(`/host/game?pin=${pin}`);
+    };
+
+    const handleEnded = () => {
+      router.push(`/host/winner?pin=${pin}`);
+    };
+
+    onEvent("leaderboard", handleLeaderboard);
+    onEvent("question_active", handleQuestion);
+    onEvent("game_ended", handleEnded);
+
+    void sync();
+
+    return () => {
+      mounted = false;
+      offEvent("leaderboard", handleLeaderboard);
+      offEvent("question_active", handleQuestion);
+      offEvent("game_ended", handleEnded);
+    };
+  }, [pin, emitWithAck, connectSocket, onEvent, offEvent, router]);
 
   // Auto-reveal animation
   useEffect(() => {
@@ -34,11 +82,20 @@ export default function LeaderboardPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleNext = () => {
-    if (isLastQuestion) {
-      router.push("/host/winner");
-    } else {
-      router.push(`/host/game?q=${currentQuestion + 1}&total=${totalQuestions}`);
+  const handleNext = async () => {
+    if (!pin || pin.length !== 6) return;
+
+    try {
+      await connectSocket();
+      const payload = await emitWithAck<{ data?: { hasMore?: boolean } }>("next_question", { pin });
+      const hasMore = payload?.data?.hasMore ?? false;
+      if (hasMore) {
+        router.push(`/host/game?pin=${pin}`);
+      } else {
+        router.push(`/host/winner?pin=${pin}`);
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -73,7 +130,7 @@ export default function LeaderboardPage() {
         </div>
         <div className="flex flex-col items-center text-white">
           <span className="text-xs font-bold uppercase tracking-widest text-white/70">
-            After Question {currentQuestion} of {totalQuestions}
+            After Question {currentQuestionIndex + 1} of {totalQuestions}
           </span>
         </div>
         <div className="flex items-center gap-3 text-white opacity-0">
@@ -99,9 +156,9 @@ export default function LeaderboardPage() {
 
         {/* Leaderboard List */}
         <div className="w-full max-w-2xl space-y-3">
-          {SIMULATED_LEADERBOARD.map((player, index) => (
+          {entries.map((player, index) => (
             <motion.div
-              key={player.name}
+              key={player.playerId}
               initial={{ opacity: 0, x: -50 }}
               animate={showAll ? { opacity: 1, x: 0 } : {}}
               transition={{ delay: index * 0.1, type: "spring", stiffness: 300, damping: 25 }}
@@ -116,13 +173,13 @@ export default function LeaderboardPage() {
                     index + 1
                   )}`}
                 >
-                  {index + 1}
+                    {player.rank}
                 </div>
 
                 {/* Player Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xl font-bold text-[#1a1a1a] truncate">{player.name}</span>
+                    <span className="text-xl font-bold text-[#1a1a1a] truncate">{player.nickname}</span>
                     {index === 0 && (
                       <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-bold">
                         LEADER
@@ -130,11 +187,9 @@ export default function LeaderboardPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    {getChangeIcon(player.change)}
+                    {getChangeIcon("same")}
                     <span className="text-sm text-[#666]">
-                      {player.change === "up" && "Moved up!"}
-                      {player.change === "down" && "Dropped"}
-                      {player.change === "same" && "Holding steady"}
+                      Holding steady
                     </span>
                   </div>
                 </div>
@@ -152,7 +207,7 @@ export default function LeaderboardPage() {
               <div className="h-1 bg-[#e5e5e5]">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={showAll ? { width: `${(player.score / SIMULATED_LEADERBOARD[0].score) * 100}%` } : {}}
+                  animate={showAll && entries[0] ? { width: `${(player.score / entries[0].score) * 100}%` } : {}}
                   transition={{ delay: index * 0.1 + 0.3, duration: 0.5 }}
                   className={`h-full ${index === 0 ? "bg-yellow-400" : "bg-[#A59A9A]"}`}
                 />

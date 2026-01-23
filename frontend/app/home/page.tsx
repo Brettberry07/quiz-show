@@ -11,6 +11,15 @@ import { useQuizzes } from "@/context/QuizContext";
 export default function HomePage() {
   const { quizzes, removeQuiz } = useQuizzes();
 
+  const handleRemoveQuiz = async (id: string) => {
+    try {
+      await removeQuiz(id);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to delete quiz";
+      alert(message);
+    }
+  };
+
   return (
     <Shell>
       <div className="p-8 max-w-6xl mx-auto space-y-8">
@@ -34,7 +43,7 @@ export default function HomePage() {
               >
                 <Card className="min-h-48 bg-[#A59A9A] border-none shadow-md hover:shadow-lg transition-all flex flex-col p-6 justify-between relative overflow-hidden group">
                   <button
-                    onClick={() => removeQuiz(quiz.id)}
+                    onClick={() => handleRemoveQuiz(quiz.id)}
                     className="absolute top-3 right-3 z-20 p-2 rounded-full bg-white/20 hover:bg-red-500 hover:text-white text-[#333] transition-all opacity-0 group-hover:opacity-100"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -43,8 +52,8 @@ export default function HomePage() {
                     <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-2">
                       <span className="text-2xl">{quiz.emoji || "📚"}</span>
                     </div>
-                    <h3 className="text-2xl font-black text-[#333] leading-tight">{quiz.name}</h3>
-                    <p className="text-[#555] font-bold">{quiz.questions.length} Question{quiz.questions.length !== 1 ? 's' : ''}</p>
+                    <h3 className="text-2xl font-black text-[#333] leading-tight">{quiz.title}</h3>
+                    <p className="text-[#555] font-bold">{quiz.questionCount} Question{quiz.questionCount !== 1 ? 's' : ''}</p>
                   </div>
                   
                   <div className="mt-4 pt-4 border-t border-black/10 flex gap-2">

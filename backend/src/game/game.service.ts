@@ -13,6 +13,7 @@ import {
 	GameState,
 } from './game.types';
 import { Game } from './game.class';
+import { GameEventsService } from './game-events.service';
 
 /**
  * GameService - Core Game Manager
@@ -28,6 +29,8 @@ import { Game } from './game.class';
 @Injectable()
 export class GameService {
 	private readonly logger = new Logger(GameService.name);
+
+	constructor(private readonly gameEvents: GameEventsService) {}
 	
 	// <PIN, Game> for PIN -> game lookup
 	private readonly activeGames = new Map<string, Game>();
@@ -113,9 +116,23 @@ export class GameService {
 	 */
 	addPlayer(options: JoinGameOptions): PlayerJoinResult {
 		const game = this.getGame(options.pin);
+
+		// Allow reconnections after the game has started by updating socket ID
+		const existingPlayer = game.getPlayer(options.userId);
+		if (existingPlayer) {
+			game.updatePlayerSocket(options.userId, options.socketId);
+			this.playerGameMap.set(options.userId, options.pin);
+			return {
+				playerId: existingPlayer.id,
+				player: existingPlayer,
+				rejoined: true,
+			};
+		}
+
         const player = game.addPlayer(options.userId, options.nickname, options.socketId);
 
         this.playerGameMap.set(options.userId, options.pin);
+		this.gameEvents.emitToPin(options.pin, 'player_joined', { pin: options.pin, player });
 		return {
             playerId: player.id,
 			player: player,
@@ -152,7 +169,8 @@ export class GameService {
 	 */
 	startGame(pin: string): Game {
 		const game = this.getGame(pin);
-		game.start((pin) => this.endCurrentQuestion(pin));
+		game.start((timeoutPin) => this.handleQuestionTimeout(timeoutPin));
+		this.emitQuestionState(game);
 		return game;
 	}
 
@@ -174,6 +192,13 @@ export class GameService {
 	endCurrentQuestion(pin: string): void {
 		const game = this.getGame(pin);
 		game.endCurrentQuestion();
+		this.gameEvents.emitToPin(pin, 'question_ended', {
+			pin,
+			state: game.state,
+			correctOptionIndex: game.getCorrectAnswer(),
+			currentQuestionIndex: game.getCurrentQuestionIndex(),
+			totalQuestions: game.getTotalQuestions(),
+		});
 	}
 
 	/**
@@ -182,15 +207,26 @@ export class GameService {
 	 */
 	showLeaderboard(pin: string): void {
 		const game = this.getGame(pin);
+		this.logger.debug(`showLeaderboard: pin=${pin} state=${game.state}`);
 		game.showLeaderboard();
+		this.emitLeaderboard(game);
 	}
     
 	/**
 	 * Advance to the next question
 	 */
-	nextQuestion(pin: string): void {
+	nextQuestion(pin: string): boolean {
 		const game = this.getGame(pin);
-		game.nextQuestion((pin) => this.endCurrentQuestion(pin));
+		this.logger.debug(`nextQuestion: pin=${pin} state=${game.state} currentIndex=${game.getCurrentQuestionIndex()} total=${game.getTotalQuestions()}`);
+		const hasMore = game.nextQuestion((timeoutPin) => this.handleQuestionTimeout(timeoutPin));
+		if (hasMore) {
+			this.logger.debug(`nextQuestion: advanced pin=${pin} newIndex=${game.getCurrentQuestionIndex()} state=${game.state}`);
+			this.emitQuestionState(game);
+		} else {
+			this.logger.debug(`nextQuestion: game ended pin=${pin}`);
+			this.emitGameEnded(game);
+		}
+		return hasMore;
 	}
 
 	/**
@@ -201,6 +237,7 @@ export class GameService {
 	endGame(pin: string): void {
 		const game = this.getGame(pin);
 		game.end();
+		this.emitGameEnded(game);
 	}
 
 	/**
@@ -219,6 +256,7 @@ export class GameService {
 			
 			game.destroy();
 			this.activeGames.delete(pin);
+			this.gameEvents.emitToPin(pin, 'game_deleted', { pin });
 		}
 	}
 
@@ -326,5 +364,44 @@ export class GameService {
 
 		// Return quiz ID for QuizService to handle the actual addition
 		return game.getQuizId();
+	}
+
+	private handleQuestionTimeout(pin: string) {
+		try {
+			this.endCurrentQuestion(pin);
+			this.showLeaderboard(pin);
+		} catch (error) {
+			this.logger.error(`Failed to auto-end question for game ${pin}: ${error}`);
+		}
+	}
+
+	private emitQuestionState(game: Game) {
+		this.gameEvents.emitToPin(game.pin, 'question_active', {
+			pin: game.pin,
+			state: game.state,
+			question: this.getCurrentQuestion(game.pin),
+			timeRemainingMs: game.getTimeRemainingMs(),
+			currentQuestionIndex: game.getCurrentQuestionIndex(),
+			totalQuestions: game.getTotalQuestions(),
+			playerCount: game.getPlayerCount(),
+		});
+	}
+
+	private emitLeaderboard(game: Game) {
+		this.gameEvents.emitToPin(game.pin, 'leaderboard', {
+			pin: game.pin,
+			state: game.state,
+			entries: this.getLeaderboard(game.pin, 10),
+			currentQuestionIndex: game.getCurrentQuestionIndex(),
+			totalQuestions: game.getTotalQuestions(),
+		});
+	}
+
+	private emitGameEnded(game: Game) {
+		this.gameEvents.emitToPin(game.pin, 'game_ended', {
+			pin: game.pin,
+			state: game.state,
+			leaderboard: this.getLeaderboard(game.pin, 10),
+		});
 	}
 }

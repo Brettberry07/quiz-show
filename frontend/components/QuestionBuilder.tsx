@@ -7,10 +7,14 @@ import { Check, Plus, UserCircle2 } from "lucide-react";
 
 export interface Question {
   id: string;
-  question: string;
+  text: string;
   options: string[];
-  correctAnswer: number;
-  creator?: string;
+  correctOptionIndex: number;
+  category?: string;
+  author?: string;
+  type: "MULTIPLE_CHOICE" | "TRUE_FALSE";
+  timeLimitSeconds: number;
+  pointsMultiplier: number;
 }
 
 interface QuestionBuilderProps {
@@ -20,6 +24,9 @@ interface QuestionBuilderProps {
 
 export function QuestionBuilder({ onAddQuestion, creatorName = "You" }: QuestionBuilderProps) {
   const [currentQuestion, setCurrentQuestion] = useState("");
+  const [category, setCategory] = useState("");
+  const [timeLimitSeconds, setTimeLimitSeconds] = useState(30);
+  const [pointsMultiplier, setPointsMultiplier] = useState(1);
   const [options, setOptions] = useState<string[]>(["", "", "", ""]);
   const [correctOption, setCorrectOption] = useState<number | null>(null);
 
@@ -45,18 +52,35 @@ export function QuestionBuilder({ onAddQuestion, creatorName = "You" }: Question
       return;
     }
 
+    if (timeLimitSeconds < 5) {
+      alert("Time limit must be at least 5 seconds");
+      return;
+    }
+
+    if (pointsMultiplier < 0.1) {
+      alert("Points multiplier must be at least 0.1");
+      return;
+    }
+
     const newQuestion: Question = {
       id: Date.now().toString(),
-      question: currentQuestion,
+      text: currentQuestion,
+      category: category.trim() || undefined,
+      author: creatorName,
       options: [...options],
-      correctAnswer: correctOption,
-      creator: creatorName,
+      correctOptionIndex: correctOption,
+      type: "MULTIPLE_CHOICE",
+      timeLimitSeconds,
+      pointsMultiplier,
     };
 
     onAddQuestion(newQuestion);
     
     // Reset form
     setCurrentQuestion("");
+    setCategory("");
+    setTimeLimitSeconds(30);
+    setPointsMultiplier(1);
     setOptions(["", "", "", ""]);
     setCorrectOption(null);
   };
@@ -83,12 +107,45 @@ export function QuestionBuilder({ onAddQuestion, creatorName = "You" }: Question
             </span>
          </div>
 
-         <Input
-           value={currentQuestion}
-           onChange={(e) => setCurrentQuestion(e.target.value)}
-           placeholder="Start typing your question here..."
-           className="bg-[#e5e5e5] border-2 border-[#cfcfcf] shadow-inner text-center text-xl md:text-2xl font-bold h-20 rounded-xl max-w-3xl focus:ring-4 focus:ring-[#A59A9A]/30 focus:border-[#3D3030]"
-         />
+         <div className="w-full max-w-3xl space-y-4">
+           <Input
+             value={currentQuestion}
+             onChange={(e) => setCurrentQuestion(e.target.value)}
+             placeholder="Start typing your question here..."
+             className="bg-[#e5e5e5] border-2 border-[#cfcfcf] shadow-inner text-center text-xl md:text-2xl font-bold h-20 rounded-xl focus:ring-4 focus:ring-[#A59A9A]/30 focus:border-[#3D3030]"
+           />
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+             <Input
+               value={category}
+               onChange={(e) => setCategory(e.target.value)}
+               placeholder="Category (optional)"
+               className="bg-[#f7f7f7] border-2 border-[#cfcfcf] rounded-xl h-12 font-semibold"
+             />
+             <Input
+               type="number"
+               min={5}
+               value={timeLimitSeconds}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                setTimeLimitSeconds(Number.isNaN(value) ? 0 : value);
+              }}
+               placeholder="Time limit (sec)"
+               className="bg-[#f7f7f7] border-2 border-[#cfcfcf] rounded-xl h-12 font-semibold"
+             />
+             <Input
+               type="number"
+               min={0.1}
+               step={0.1}
+               value={pointsMultiplier}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                setPointsMultiplier(Number.isNaN(value) ? 0 : value);
+              }}
+               placeholder="Points multiplier"
+               className="bg-[#f7f7f7] border-2 border-[#cfcfcf] rounded-xl h-12 font-semibold"
+             />
+           </div>
+         </div>
       </div>
 
       {/* Answer Options Area */}

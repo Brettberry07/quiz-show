@@ -69,6 +69,14 @@ export class JwtService {
     }
   }
 
+  async verifyAndDecode<T extends object = JwtPayload>(token: string): Promise<T> {
+    const secret = this.configService.get<string>("JWT_SECRET");
+    return this.jwtService.verifyAsync<T>(token, {
+      secret,
+      algorithms: ["HS256"],
+    });
+  }
+
   // Extract payload without validating signature (useful for debugging)
   decodeToken(token: string): JwtPayload | null {
     return this.jwtService.decode(token);

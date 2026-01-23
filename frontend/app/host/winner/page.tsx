@@ -5,8 +5,75 @@ import Link from 'next/link';
 import Image from "next/image";
 import { Crown, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { useUser } from "@/context/UserContext";
+import { useGame } from "@/context/GameContext";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function WinnerPage() {
+    const { username, fetchWithAuth } = useUser();
+    const { emitWithAck, connectSocket, onEvent, offEvent } = useGame();
+    const searchParams = useSearchParams();
+    const pin = searchParams.get("pin") || "";
+    const [leaders, setLeaders] = useState<string[]>(["", "", ""]);
+
+    useEffect(() => {
+        if (!pin || pin.length !== 6) return;
+        let mounted = true;
+
+        const applyEntries = (entries: Array<{ nickname?: string }>) => {
+            setLeaders([
+                entries[0]?.nickname || "",
+                entries[1]?.nickname || "",
+                entries[2]?.nickname || "",
+            ]);
+        };
+
+        const sync = async () => {
+            try {
+                await connectSocket();
+                const payload = await emitWithAck<{ data?: { leaderboard?: Array<{ nickname?: string }> } }>("sync_state", { pin });
+                if (!mounted) return;
+                if (payload?.data?.leaderboard?.length) {
+                    applyEntries(payload.data.leaderboard);
+                    return;
+                }
+            } catch (error) {
+                // ignore and fall back to fetch
+            }
+
+            // Fallback to REST if no leaderboard yet
+            const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/leaderboard?limit=3`).catch(() => null);
+            if (!mounted || !response || !response.ok) return;
+            const payload = await response.json();
+            const entries = payload?.data?.entries || [];
+            if (mounted) {
+                applyEntries(entries);
+            }
+        };
+
+        const handleLeaderboard = (data: { entries?: Array<{ nickname?: string }> }) => {
+            if (!mounted || !data?.entries) return;
+            applyEntries(data.entries);
+        };
+
+        const handleEnded = (data: { leaderboard?: Array<{ nickname?: string }> }) => {
+            if (!mounted) return;
+            if (data?.leaderboard) {
+                applyEntries(data.leaderboard);
+            }
+        };
+
+        onEvent("leaderboard", handleLeaderboard);
+        onEvent("game_ended", handleEnded);
+        void sync();
+
+        return () => {
+            mounted = false;
+            offEvent("leaderboard", handleLeaderboard);
+            offEvent("game_ended", handleEnded);
+        };
+    }, [pin, fetchWithAuth, emitWithAck, connectSocket, onEvent, offEvent]);
   // Winner Page Implementation
   return (
     <div className="min-h-screen w-full flex flex-col overflow-hidden" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
@@ -17,7 +84,7 @@ export default function WinnerPage() {
             <Image src="/text.svg" alt="QuizSink Logo" width={144} height={144} className="w-36 h-36" />
         </div>
         <div className="flex items-center gap-3 text-white">
-            <span className="text-xl font-medium">Mhiki</span>
+            <span className="text-xl font-medium">{username || "Host"}</span>
             <div className="h-10 w-10 rounded-full bg-[#d9d9d9]" />
         </div>
       </header>
@@ -25,7 +92,7 @@ export default function WinnerPage() {
       {/* Podium Section */}
       <main className="flex-1 flex items-end justify-center pb-0 px-4 relative">
         <div className="absolute top-8 right-8 z-20 flex gap-3">
-            <Link href="/host/review">
+            <Link href={`/host/review?pin=${pin}`}>
                 <Button variant="secondary" className="bg-[#A59A9A] text-[#333] hover:bg-[#958A8A] border-b-4 border-[#857A7A] active:border-b-0 active:translate-y-1 transition-all flex items-center gap-2">
                     <ClipboardList className="w-4 h-4" />
                     Review Questions
@@ -48,7 +115,7 @@ export default function WinnerPage() {
                     transition={{ delay: 1.4 }}
                     className="mb-4 text-center"
                 >
-                    <span className="text-xl font-bold text-[#444] block">Player 3</span>
+                    <span className="text-xl font-bold text-[#444] block">{leaders[2] || ""}</span>
                  </motion.div>
                  <motion.div 
                     initial={{ height: 0 }}
@@ -77,7 +144,7 @@ export default function WinnerPage() {
                     transition={{ delay: 1.2 }}
                     className="mb-4 text-center"
                 >
-                    <span className="text-2xl font-black text-[#222] block">Mhiki</span>
+                    <span className="text-2xl font-black text-[#222] block">{leaders[0] || ""}</span>
                  </motion.div>
 
                  <motion.div 
@@ -96,7 +163,7 @@ export default function WinnerPage() {
                     transition={{ delay: 1.3 }}
                     className="mb-4 text-center"
                 >
-                    <span className="text-xl font-bold text-[#444] block">Player 2</span>
+                    <span className="text-xl font-bold text-[#444] block">{leaders[1] || ""}</span>
                  </motion.div>
                  <motion.div 
                     initial={{ height: 0 }}
