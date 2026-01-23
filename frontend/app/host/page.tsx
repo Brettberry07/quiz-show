@@ -9,17 +9,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuizzes } from "@/context/QuizContext";
 import { useGame } from "@/context/GameContext";
-import { useUser } from "@/context/UserContext";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200";
 
 export default function HostPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const quizId = searchParams.get("quizId");
     const { getQuiz } = useQuizzes();
-    const { setCurrentQuiz } = useGame();
-    const { fetchWithAuth } = useUser();
+    const { setCurrentQuiz, emitWithAck, onEvent, offEvent, connectSocket } = useGame();
     const [players, setPlayers] = useState<string[]>([]);
     const [pin, setPin] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -46,17 +42,10 @@ export default function HostPage() {
         const createGame = async () => {
             setLoading(true);
             try {
-                const response = await fetchWithAuth(`${API_BASE_URL}/game`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ quizId }),
-                });
-                const payload = await response.json();
-                if (!response.ok) {
-                    throw new Error(payload?.message || "Failed to create game");
-                }
+                await connectSocket();
+                const response = await emitWithAck<{ status: string; data: { pin: string } }>("create_game", { quizId });
                 if (mounted) {
-                    setPin(payload.data.pin);
+                    setPin(response.data.pin);
                 }
             } catch (error) {
                 console.error(error);
@@ -68,30 +57,25 @@ export default function HostPage() {
         return () => {
             mounted = false;
         };
-    }, [quizId, pin, fetchWithAuth]);
+    }, [quizId, pin, emitWithAck, connectSocket]);
 
     useEffect(() => {
         if (!pin) return;
-        let isMounted = true;
-        const pollPlayers = async () => {
-            try {
-                const response = await fetchWithAuth(`${API_BASE_URL}/game/${pin}/players`);
-                const payload = await response.json();
-                if (response.ok && isMounted) {
-                    setPlayers((payload.data || []).map((p: { nickname: string }) => p.nickname));
+        const handleJoin = (payload: { player: { nickname: string } }) => {
+            setPlayers((prev) => {
+                const next = new Set(prev);
+                if (payload?.player?.nickname) {
+                    next.add(payload.player.nickname);
                 }
-            } catch (error) {
-                console.error(error);
-            }
+                return Array.from(next);
+            });
         };
 
-        const interval = setInterval(pollPlayers, 1500);
-        void pollPlayers();
+        onEvent("player_joined", handleJoin);
         return () => {
-            isMounted = false;
-            clearInterval(interval);
+            offEvent("player_joined", handleJoin);
         };
-    }, [pin, fetchWithAuth]);
+    }, [pin, onEvent, offEvent]);
 
     return (
         <div className="min-h-screen flex flex-col text-[#111]" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
@@ -172,11 +156,7 @@ export default function HostPage() {
                                 onClick={async () => {
                                     if (!pin) return;
                                     try {
-                                        const response = await fetchWithAuth(`${API_BASE_URL}/game/${pin}/start`, { method: "POST" });
-                                        if (!response.ok) {
-                                            const payload = await response.json().catch(() => ({}));
-                                            throw new Error(payload?.message || "Failed to start game");
-                                        }
+                                        await emitWithAck("start_game", { pin });
                                         router.push(`/host/game?pin=${pin}`);
                                     } catch (error) {
                                         console.error(error);

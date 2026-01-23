@@ -9,6 +9,38 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { QuestionBuilder, Question } from "@/components/QuestionBuilder";
 import { Button } from "@/components/ui/Button";
 import { useUser } from "@/context/UserContext";
+import { useGame } from "@/context/GameContext";
+
+interface QuestionEventPayload {
+  question?: Question | null;
+  timeRemainingMs?: number | null;
+  currentQuestionIndex?: number;
+  totalQuestions?: number;
+  state?: string;
+}
+
+interface StateEventPayload {
+  currentQuestionIndex?: number;
+}
+
+interface JoinGameResponse {
+  status?: string;
+  data?: {
+    pin: string;
+    playerId?: string;
+    rejoined?: boolean;
+  };
+}
+
+interface SyncStateResponse {
+  data?: {
+    state?: string;
+    question?: Question | null;
+    timeRemainingMs?: number | null;
+    currentQuestionIndex?: number;
+    totalQuestions?: number;
+  };
+}
 
 const ANSWER_ICONS = [
   <Waves key="wave" className="w-16 h-16 md:w-24 md:h-24 fill-current" />,
@@ -21,6 +53,7 @@ export default function PlayPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { username, fetchWithAuth } = useUser();
+  const { connectSocket, emitWithAck, onEvent, offEvent } = useGame();
   const pin = searchParams.get("pin") || searchParams.get("code") || "";
 
   const [question, setQuestion] = useState<Question | null>(null);
@@ -32,52 +65,75 @@ export default function PlayPage() {
   useEffect(() => {
     if (!pin) return;
     let mounted = true;
-    const pollQuestion = async () => {
-      try {
-        const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/question`);
-        const payload = await response.json();
-        if (!mounted) return;
-        if (response.ok) {
-          setQuestion(payload.data.question);
-          setTimeRemainingMs(payload.data.timeRemainingMs ?? null);
-          setCurrentQuestionIndex(payload.data.currentQuestionIndex ?? 0);
-          setTotalQuestions(payload.data.totalQuestions ?? 0);
 
-          if (payload.data.state === "QUESTION_ACTIVE") {
-            setGameState('playing');
-          } else if (payload.data.state === "LOBBY") {
-            setGameState((prev) => (prev === 'adding_question' ? prev : 'waiting'));
-          } else if (payload.data.state === "PROCESSING" || payload.data.state === "LEADERBOARD") {
-            router.push(`/play/leaderboard?pin=${pin}&q=${currentQuestionIndex + 1}&total=${totalQuestions}`);
-          }
+    const sync = async () => {
+      try {
+        await connectSocket();
+        const joinResponse = await emitWithAck<JoinGameResponse>("join_game", { pin, nickname: username || "Player" });
+        if (!mounted) return;
+        if (!joinResponse || joinResponse.status !== "ok") {
+          throw new Error("Failed to join game");
+        }
+        const stateResponse = await emitWithAck<SyncStateResponse>("sync_state", { pin });
+        const data = stateResponse?.data ?? {};
+        setQuestion(data.question || null);
+        setTimeRemainingMs(data.timeRemainingMs ?? null);
+        setCurrentQuestionIndex(data.currentQuestionIndex ?? 0);
+        setTotalQuestions(data.totalQuestions ?? 0);
+        const normalized = (data.state || "LOBBY").toString().toUpperCase();
+        if (normalized.includes("QUESTION_ACTIVE") || normalized === "QUESTION_ACTIVE") {
+          setGameState("playing");
+        } else if (normalized === "LOBBY") {
+          setGameState((prev) => (prev === "adding_question" ? prev : "waiting"));
         }
       } catch (error) {
         console.error(error);
       }
     };
 
-    const interval = setInterval(pollQuestion, 1000);
-    void pollQuestion();
+    const handleQuestion = (data: QuestionEventPayload) => {
+      if (!mounted) return;
+      setQuestion(data.question || null);
+      setTimeRemainingMs(data.timeRemainingMs ?? null);
+      setCurrentQuestionIndex(data.currentQuestionIndex ?? 0);
+      setTotalQuestions(data.totalQuestions ?? 0);
+      setGameState("playing");
+    };
+
+    const handleEnded = (data: StateEventPayload) => {
+      if (!mounted) return;
+      const nextIndex = (data?.currentQuestionIndex ?? currentQuestionIndex) + 1;
+      router.push(`/play/leaderboard?pin=${pin}&q=${nextIndex}&total=${totalQuestions}`);
+    };
+
+    const handleLeaderboard = (data: StateEventPayload) => {
+      if (!mounted) return;
+      const nextIndex = (data?.currentQuestionIndex ?? currentQuestionIndex) + 1;
+      router.push(`/play/leaderboard?pin=${pin}&q=${nextIndex}&total=${totalQuestions}`);
+    };
+
+    onEvent("question_active", handleQuestion);
+    onEvent("question_ended", handleEnded);
+    onEvent("leaderboard", handleLeaderboard);
+    onEvent("game_ended", handleLeaderboard);
+
+    void sync();
+
     return () => {
       mounted = false;
-      clearInterval(interval);
+      offEvent("question_active", handleQuestion);
+      offEvent("question_ended", handleEnded);
+      offEvent("leaderboard", handleLeaderboard);
+      offEvent("game_ended", handleLeaderboard);
     };
-  }, [pin, fetchWithAuth, router, currentQuestionIndex, totalQuestions]);
+  }, [pin, username, emitWithAck, connectSocket, onEvent, offEvent, router, currentQuestionIndex, totalQuestions]);
 
   const handleAnswer = (selectedIndex: number) => {
     if (!pin) return;
-    fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/answer`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answerIndex: selectedIndex }),
-    })
-      .then(async (response) => {
-        const payload = await response.json();
-        if (!response.ok) {
-          throw new Error(payload?.message || "Failed to submit answer");
-        }
-        const points = payload.data?.points || 0;
-        const isCorrect = payload.data?.isCorrect || false;
+    emitWithAck<{ data?: { points?: number; isCorrect?: boolean } }>("submit_answer", { pin, answerIndex: selectedIndex })
+      .then((payload) => {
+        const points = payload?.data?.points || 0;
+        const isCorrect = payload?.data?.isCorrect || false;
         router.push(`/play/leaderboard?pin=${pin}&q=${currentQuestionIndex + 1}&total=${totalQuestions}&points=${points}&correct=${isCorrect}`);
       })
       .catch((error) => {

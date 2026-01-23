@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { TrendingUp, TrendingDown, Minus, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useUser } from "@/context/UserContext";
+import { useGame } from "@/context/GameContext";
 
 interface LeaderboardEntry {
   playerId: string;
@@ -18,12 +19,10 @@ export default function PlayerLeaderboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { username, fetchWithAuth } = useUser();
+  const { connectSocket, onEvent, offEvent } = useGame();
   const pin = searchParams.get("pin") || "";
-  const currentQuestion = parseInt(searchParams.get("q") || "1");
-  const totalQuestions = parseInt(searchParams.get("total") || "12");
   const pointsEarned = parseInt(searchParams.get("points") || "0");
   const wasCorrect = searchParams.get("correct") === "true";
-  const isLastQuestion = currentQuestion >= totalQuestions;
 
   const [showAll, setShowAll] = useState(false);
   const [waitingForNext, setWaitingForNext] = useState(false);
@@ -59,24 +58,32 @@ export default function PlayerLeaderboardPage() {
       setWaitingForNext(true);
     }, 2000);
 
-    const pollNext = async () => {
-      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/question`);
-      const payload = await response.json();
-      if (!response.ok) return;
-      if (payload.data.state === "QUESTION_ACTIVE") {
-        router.push(`/play?pin=${pin}`);
-      }
-      if (payload.data.state === "ENDED" || (isLastQuestion && payload.data.state === "LEADERBOARD")) {
-        router.push(`/host/winner?pin=${pin}`);
+    const onQuestion = () => {
+      router.push(`/play?pin=${pin}`);
+    };
+
+    const onEnded = () => {
+      router.push(`/host/winner?pin=${pin}`);
+    };
+
+    const onLeaderboard = (data: { entries?: LeaderboardEntry[] }) => {
+      if (data?.entries) {
+        setEntries(data.entries);
       }
     };
 
-    const interval = setInterval(pollNext, 2000);
+    void connectSocket();
+    onEvent("question_active", onQuestion);
+    onEvent("game_ended", onEnded);
+    onEvent("leaderboard", onLeaderboard);
+
     return () => {
       clearTimeout(timer);
-      clearInterval(interval);
+      offEvent("question_active", onQuestion);
+      offEvent("game_ended", onEnded);
+      offEvent("leaderboard", onLeaderboard);
     };
-  }, [pin, fetchWithAuth, router, isLastQuestion]);
+  }, [pin, router, connectSocket, onEvent, offEvent]);
 
   const getRankBadge = (rank: number) => {
     if (rank === 1) return "bg-yellow-400 text-yellow-900";

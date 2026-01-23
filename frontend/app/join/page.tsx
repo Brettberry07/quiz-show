@@ -8,16 +8,15 @@ import Link from 'next/link';
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useUser } from "@/context/UserContext";
+import { useGame } from "@/context/GameContext";
 
 export default function JoinPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { username, fetchWithAuth } = useUser();
-
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200";
-
+  const { username } = useUser();
+  const { emitWithAck, connectSocket } = useGame();
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (code.length < 7) return; // Basic validation for xxx-xxx
@@ -26,17 +25,14 @@ export default function JoinPage() {
 
     try {
       const pin = code.replace("-", "");
-      const response = await fetchWithAuth(`${API_BASE_URL}/game/${pin}/join`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nickname: username || "Player" }),
+      await connectSocket();
+      const response = await emitWithAck<{ status?: string }>("join_game", {
+        pin,
+        nickname: username || "Player",
       });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload?.message || "Failed to join game");
+      if (!response || response.status !== "ok") {
+        throw new Error("Failed to join game");
       }
-
       router.push(`/play?pin=${pin}`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to join game";

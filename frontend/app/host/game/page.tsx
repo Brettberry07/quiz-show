@@ -5,7 +5,7 @@ import { User, Waves, Hand } from "lucide-react";
 import Link from 'next/link';
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { useUser } from "@/context/UserContext";
+import { useGame } from "@/context/GameContext";
 
 const ANSWER_ICONS = [
   <Waves key="wave" className="w-12 h-12 fill-current" />,
@@ -18,13 +18,31 @@ export default function HostGamePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pin = searchParams.get("pin") || "";
-  const { fetchWithAuth } = useUser();
+  const { connectSocket, emitWithAck, onEvent, offEvent } = useGame();
 
   interface GameQuestion {
     text: string;
     options: string[];
     correctOptionIndex?: number;
     category?: string;
+  }
+
+  interface QuestionEventPayload {
+    question?: GameQuestion | null;
+    timeRemainingMs?: number | null;
+    currentQuestionIndex?: number;
+    totalQuestions?: number;
+    state?: string;
+  }
+
+  interface SyncStatePayload {
+    data?: {
+      question?: GameQuestion | null;
+      timeRemainingMs?: number | null;
+      currentQuestionIndex?: number;
+      totalQuestions?: number;
+      state?: string;
+    };
   }
 
   const [question, setQuestion] = useState<GameQuestion | null>(null);
@@ -36,38 +54,60 @@ export default function HostGamePage() {
   useEffect(() => {
     if (!pin) return;
     let mounted = true;
-    const pollQuestion = async () => {
+
+    const sync = async () => {
       try {
-        const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/question`);
-        const payload = await response.json();
+        await connectSocket();
+        const payload = await emitWithAck<SyncStatePayload>("sync_state", { pin });
         if (!mounted) return;
-        if (response.ok) {
-          setQuestion(payload.data.question);
-          setTimeRemainingMs(payload.data.timeRemainingMs ?? null);
-          setCurrentQuestionIndex(payload.data.currentQuestionIndex ?? 0);
-          setTotalQuestions(payload.data.totalQuestions ?? 0);
-          setGameState(payload.data.state || "LOBBY");
-          if (payload.data.state === "PROCESSING") {
-            router.push(`/host/leaderboard?pin=${pin}`);
-          }
-        }
+        const data = payload?.data ?? {};
+        setQuestion(data.question || null);
+        setTimeRemainingMs(data.timeRemainingMs ?? null);
+        setCurrentQuestionIndex(data.currentQuestionIndex ?? 0);
+        setTotalQuestions(data.totalQuestions ?? 0);
+        setGameState(data.state || "LOBBY");
       } catch (error) {
         console.error(error);
       }
     };
 
-    const interval = setInterval(pollQuestion, 1000);
-    void pollQuestion();
+    const handleQuestion = (data: QuestionEventPayload) => {
+      if (!mounted) return;
+      setQuestion(data.question || null);
+      setTimeRemainingMs(data.timeRemainingMs ?? null);
+      setCurrentQuestionIndex(data.currentQuestionIndex ?? 0);
+      setTotalQuestions(data.totalQuestions ?? 0);
+      setGameState(data.state || "QUESTION_ACTIVE");
+    };
+
+    const handleLeaderboard = () => {
+      if (!mounted) return;
+      router.push(`/host/leaderboard?pin=${pin}`);
+    };
+
+    const handleEnded = () => {
+      if (!mounted) return;
+      router.push(`/host/leaderboard?pin=${pin}`);
+    };
+
+    onEvent("question_active", handleQuestion);
+    onEvent("leaderboard", handleLeaderboard);
+    onEvent("question_ended", handleEnded);
+
+    void sync();
+
     return () => {
       mounted = false;
-      clearInterval(interval);
+      offEvent("question_active", handleQuestion);
+      offEvent("leaderboard", handleLeaderboard);
+      offEvent("question_ended", handleEnded);
     };
-  }, [pin, fetchWithAuth, router]);
+  }, [pin, emitWithAck, connectSocket, onEvent, offEvent, router]);
 
   const handleManualNext = async () => {
     if (!pin) return;
-    await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/question/end`, { method: "POST" });
-    await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/leaderboard/show`, { method: "POST" });
+    await emitWithAck("end_question", { pin });
+    await emitWithAck("show_leaderboard", { pin });
     router.push(`/host/leaderboard?pin=${pin}`);
   };
 
