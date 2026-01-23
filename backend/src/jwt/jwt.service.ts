@@ -63,8 +63,7 @@ export class JwtService {
         algorithms: ["HS256"],
       });
       return true;
-    } catch (error) {
-      console.error("Token verification error:", error);
+    } catch {
       return false;
     }
   }
@@ -85,10 +84,10 @@ export class JwtService {
   // ----- TOKEN ROTATION -----
   async rotateTokens(userId: string) {
     const payload: JwtPayload = { sub: userId };
-
+    
     const accessToken = await this.generateAccessToken(payload);
     const refreshToken = await this.generateRefreshToken(payload);
-
+    
     // Return both but hash refresh before saving
     return {
       accessToken,
