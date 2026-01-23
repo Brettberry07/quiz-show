@@ -33,22 +33,26 @@ export default function PlayPage() {
     if (!pin) return;
     let mounted = true;
     const pollQuestion = async () => {
-      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/question`);
-      const payload = await response.json();
-      if (!mounted) return;
-      if (response.ok) {
-        setQuestion(payload.data.question);
-        setTimeRemainingMs(payload.data.timeRemainingMs ?? null);
-        setCurrentQuestionIndex(payload.data.currentQuestionIndex ?? 0);
-        setTotalQuestions(payload.data.totalQuestions ?? 0);
+      try {
+        const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/question`);
+        const payload = await response.json();
+        if (!mounted) return;
+        if (response.ok) {
+          setQuestion(payload.data.question);
+          setTimeRemainingMs(payload.data.timeRemainingMs ?? null);
+          setCurrentQuestionIndex(payload.data.currentQuestionIndex ?? 0);
+          setTotalQuestions(payload.data.totalQuestions ?? 0);
 
-        if (payload.data.state === "QUESTION_ACTIVE") {
-          setGameState('playing');
-        } else if (payload.data.state === "LOBBY") {
-          setGameState('waiting');
-        } else if (payload.data.state === "PROCESSING" || payload.data.state === "LEADERBOARD") {
-          router.push(`/play/leaderboard?pin=${pin}&q=${currentQuestionIndex + 1}&total=${totalQuestions}`);
+          if (payload.data.state === "QUESTION_ACTIVE") {
+            setGameState('playing');
+          } else if (payload.data.state === "LOBBY") {
+            setGameState((prev) => (prev === 'adding_question' ? prev : 'waiting'));
+          } else if (payload.data.state === "PROCESSING" || payload.data.state === "LEADERBOARD") {
+            router.push(`/play/leaderboard?pin=${pin}&q=${currentQuestionIndex + 1}&total=${totalQuestions}`);
+          }
         }
+      } catch (error) {
+        console.error(error);
       }
     };
 

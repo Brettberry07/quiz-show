@@ -65,6 +65,7 @@ export class GameController {
       data: {
         ...game.getSafeSummary(),
         hostId: game.hostUserId,
+        quizId: game.getQuizId(),
         currentQuestionIndex: game.getCurrentQuestionIndex(),
         totalQuestions: game.getTotalQuestions(),
         startedAt: game.startedAt,

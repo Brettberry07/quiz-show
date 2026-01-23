@@ -53,7 +53,7 @@ export default function WinnerPage() {
       {/* Podium Section */}
       <main className="flex-1 flex items-end justify-center pb-0 px-4 relative">
         <div className="absolute top-8 right-8 z-20 flex gap-3">
-            <Link href="/host/review">
+            <Link href={`/host/review?pin=${pin}`}>
                 <Button variant="secondary" className="bg-[#A59A9A] text-[#333] hover:bg-[#958A8A] border-b-4 border-[#857A7A] active:border-b-0 active:translate-y-1 transition-all flex items-center gap-2">
                     <ClipboardList className="w-4 h-4" />
                     Review Questions

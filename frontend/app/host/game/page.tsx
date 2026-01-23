@@ -37,18 +37,22 @@ export default function HostGamePage() {
     if (!pin) return;
     let mounted = true;
     const pollQuestion = async () => {
-      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/question`);
-      const payload = await response.json();
-      if (!mounted) return;
-      if (response.ok) {
-        setQuestion(payload.data.question);
-        setTimeRemainingMs(payload.data.timeRemainingMs ?? null);
-        setCurrentQuestionIndex(payload.data.currentQuestionIndex ?? 0);
-        setTotalQuestions(payload.data.totalQuestions ?? 0);
-        setGameState(payload.data.state || "LOBBY");
-        if (payload.data.state === "PROCESSING") {
-          router.push(`/host/leaderboard?pin=${pin}`);
+      try {
+        const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/question`);
+        const payload = await response.json();
+        if (!mounted) return;
+        if (response.ok) {
+          setQuestion(payload.data.question);
+          setTimeRemainingMs(payload.data.timeRemainingMs ?? null);
+          setCurrentQuestionIndex(payload.data.currentQuestionIndex ?? 0);
+          setTotalQuestions(payload.data.totalQuestions ?? 0);
+          setGameState(payload.data.state || "LOBBY");
+          if (payload.data.state === "PROCESSING") {
+            router.push(`/host/leaderboard?pin=${pin}`);
+          }
         }
+      } catch (error) {
+        console.error(error);
       }
     };
 

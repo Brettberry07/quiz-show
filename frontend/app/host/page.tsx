@@ -168,11 +168,19 @@ export default function HostPage() {
                </div>
 
                 <div className="mt-8 flex justify-end">
-                            <Button
+                             <Button
                                 onClick={async () => {
-                                     if (!pin) return;
-                                     await fetchWithAuth(`${API_BASE_URL}/game/${pin}/start`, { method: "POST" });
-                                     router.push(`/host/game?pin=${pin}`);
+                                    if (!pin) return;
+                                    try {
+                                        const response = await fetchWithAuth(`${API_BASE_URL}/game/${pin}/start`, { method: "POST" });
+                                        if (!response.ok) {
+                                            const payload = await response.json().catch(() => ({}));
+                                            throw new Error(payload?.message || "Failed to start game");
+                                        }
+                                        router.push(`/host/game?pin=${pin}`);
+                                    } catch (error) {
+                                        console.error(error);
+                                    }
                                 }} 
                                 disabled={!pin}
                         className="h-14 px-12 bg-[#202020] text-white text-xl font-black hover:bg-[#333] hover:scale-105 active:scale-95 transition-all shadow-xl rounded-full border-b-4 border-[#111] active:border-b-0 active:translate-y-1 disabled:opacity-50"

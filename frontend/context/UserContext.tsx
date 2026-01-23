@@ -146,12 +146,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const fetchWithAuth = useCallback(
     async (input: RequestInfo | URL, init: RequestInit = {}) => {
-      if (!accessToken) {
-        throw new Error("Missing access token");
+      let token = accessToken || localStorage.getItem(STORAGE_KEYS.accessToken);
+      if (!token) {
+        const refreshed = await refreshSession();
+        token = localStorage.getItem(STORAGE_KEYS.accessToken);
+        if (!refreshed || !token) {
+          throw new Error("Missing access token");
+        }
       }
 
       const headers = new Headers(init.headers || {});
-      headers.set("Authorization", `Bearer ${accessToken}`);
+      headers.set("Authorization", `Bearer ${token}`);
 
       const response = await fetch(input, {
         ...init,
