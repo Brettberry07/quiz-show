@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsEnum, IsNumber, Min, IsInt, ArrayMinSize } from "class-validator";
+import { IsString, IsNotEmpty, IsArray, ValidateNested, IsEnum, IsNumber, Min, IsInt, ArrayMinSize, IsOptional } from "class-validator";
 import { Type } from "class-transformer";
 import { QuestionType } from "../../game/game.types";
 
@@ -9,6 +9,14 @@ export class CreateQuestionDto {
   @IsString({ message: "Question text must be a string" })
   @IsNotEmpty({ message: "Question text is required" })
   text: string;
+
+  @IsString({ message: "Category must be a string" })
+  @IsOptional()
+  category?: string;
+
+  @IsString({ message: "Author must be a string" })
+  @IsOptional()
+  author?: string;
 
   @IsEnum(QuestionType, { message: "Invalid question type" })
   type: QuestionType;

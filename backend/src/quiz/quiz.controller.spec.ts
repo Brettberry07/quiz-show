@@ -4,6 +4,10 @@ import { QuizService } from './quiz.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { HttpStatus } from '@nestjs/common';
 import { QuestionType } from '../game/game.types';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { QuizEntity } from '../entities/quiz.entity';
+import { QuestionEntity } from '../entities/question.entity';
+import { GameService } from '../game/game.service';
 
 describe('QuizController', () => {
   let controller: QuizController;
@@ -16,8 +20,24 @@ describe('QuizController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        TypeOrmModule.forRoot({
+          type: 'sqlite',
+          database: ':memory:',
+          dropSchema: true,
+          entities: [QuizEntity, QuestionEntity],
+          synchronize: true,
+        }),
+        TypeOrmModule.forFeature([QuizEntity, QuestionEntity]),
+      ],
       controllers: [QuizController],
-      providers: [QuizService],
+      providers: [
+        QuizService,
+        {
+          provide: GameService,
+          useValue: { validatePlayerQuestionContribution: jest.fn() },
+        },
+      ],
     })
       .overrideGuard(JwtAuthGuard)
       .useValue(mockJwtAuthGuard)
@@ -36,7 +56,7 @@ describe('QuizController', () => {
   });
 
   describe('createQuiz', () => {
-    it('should create a quiz', () => {
+    it('should create a quiz', async () => {
       const createQuizDto = {
         title: 'Test Quiz',
         questions: [
@@ -52,7 +72,7 @@ describe('QuizController', () => {
       };
       const mockRequest = { user: { id: 'user-123', username: 'testuser', role: 'user' } };
 
-      const result = controller.createQuiz(createQuizDto, mockRequest);
+      const result = await controller.createQuiz(createQuizDto, mockRequest);
 
       expect(result.message).toBe('Quiz created successfully');
       expect(result.status).toBe(HttpStatus.CREATED);
@@ -61,14 +81,14 @@ describe('QuizController', () => {
   });
 
   describe('findAll', () => {
-    it('should return empty array initially', () => {
-      const result = controller.findAll();
+    it('should return empty array initially', async () => {
+      const result = await controller.findAll();
       expect(result.data).toEqual([]);
     });
   });
 
   describe('findMyQuizzes', () => {
-    it('should return quizzes owned by the user', () => {
+    it('should return quizzes owned by the user', async () => {
       const mockRequest = { user: { id: 'user-123', username: 'testuser', role: 'user' } };
       
       // Create a quiz first
@@ -85,9 +105,9 @@ describe('QuizController', () => {
           },
         ],
       };
-      controller.createQuiz(createQuizDto, mockRequest);
+      await controller.createQuiz(createQuizDto, mockRequest);
 
-      const result = controller.findMyQuizzes(mockRequest);
+      const result = await controller.findMyQuizzes(mockRequest);
       expect(result.data.length).toBe(1);
       expect(result.data[0].title).toBe('My Quiz');
     });

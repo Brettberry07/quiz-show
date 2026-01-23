@@ -7,6 +7,8 @@ export class Question {
 	public readonly id: string;
 	public readonly quizId: string;
 	public text: string;
+	public category?: string;
+	public author?: string;
 	public type: QuestionType;
 	public timeLimitSeconds: number;
 	public pointsMultiplier: number;
@@ -17,6 +19,8 @@ export class Question {
 		id: string,
 		quizId: string,
 		text: string,
+		category: string | undefined,
+		author: string | undefined,
 		type: QuestionType,
 		timeLimitSeconds: number,
 		pointsMultiplier: number,
@@ -26,6 +30,8 @@ export class Question {
 		this.id = id;
 		this.quizId = quizId;
 		this.text = text;
+		this.category = category;
+		this.author = author;
 		this.type = type;
 		this.timeLimitSeconds = timeLimitSeconds;
 		this.pointsMultiplier = pointsMultiplier;
@@ -40,6 +46,8 @@ export class Question {
 		return {
 			id: this.id,
 			text: this.text,
+			category: this.category,
+			author: this.author,
 			type: this.type,
 			timeLimitSeconds: this.timeLimitSeconds,
 			pointsMultiplier: this.pointsMultiplier,
@@ -151,6 +159,8 @@ export class Quiz {
 			questions: this.questions.map(q => ({
 				id: q.id,
 				text: q.text,
+				category: q.category,
+				author: q.author,
 				type: q.type,
 				timeLimitSeconds: q.timeLimitSeconds,
 				pointsMultiplier: q.pointsMultiplier,

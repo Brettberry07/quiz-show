@@ -40,8 +40,8 @@ export class GameController {
   ) {}
 
   @Post()
-  createGame(@Body() dto: CreateGameDto, @Request() req: AuthenticatedRequest) {
-    const quiz = this.quizService.getQuizForGame(dto.quizId);
+  async createGame(@Body() dto: CreateGameDto, @Request() req: AuthenticatedRequest) {
+    const quiz = await this.quizService.getQuizForGame(dto.quizId);
     const game = this.gameService.createGame(quiz, {
       quizId: dto.quizId,
       hostUserId: req.user.id,
