@@ -6,36 +6,74 @@ import Image from "next/image";
 import { Crown, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useUser } from "@/context/UserContext";
+import { useGame } from "@/context/GameContext";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function WinnerPage() {
     const { username, fetchWithAuth } = useUser();
+    const { emitWithAck, connectSocket, onEvent, offEvent } = useGame();
     const searchParams = useSearchParams();
     const pin = searchParams.get("pin") || "";
-    const [leaders, setLeaders] = useState<string[]>(["Player 1", "Player 2", "Player 3"]);
+    const [leaders, setLeaders] = useState<string[]>(["", "", ""]);
 
     useEffect(() => {
         if (!pin || pin.length !== 6) return;
         let mounted = true;
-        const loadLeaderboard = async () => {
+
+        const applyEntries = (entries: Array<{ nickname?: string }>) => {
+            setLeaders([
+                entries[0]?.nickname || "",
+                entries[1]?.nickname || "",
+                entries[2]?.nickname || "",
+            ]);
+        };
+
+        const sync = async () => {
+            try {
+                await connectSocket();
+                const payload = await emitWithAck<{ data?: { leaderboard?: Array<{ nickname?: string }> } }>("sync_state", { pin });
+                if (!mounted) return;
+                if (payload?.data?.leaderboard?.length) {
+                    applyEntries(payload.data.leaderboard);
+                    return;
+                }
+            } catch (error) {
+                // ignore and fall back to fetch
+            }
+
+            // Fallback to REST if no leaderboard yet
             const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/leaderboard?limit=3`).catch(() => null);
-            if (!response || !response.ok) return;
+            if (!mounted || !response || !response.ok) return;
             const payload = await response.json();
+            const entries = payload?.data?.entries || [];
             if (mounted) {
-                const entries = payload.data.entries || [];
-                setLeaders([
-                    entries[0]?.nickname || "Player 1",
-                    entries[1]?.nickname || "Player 2",
-                    entries[2]?.nickname || "Player 3",
-                ]);
+                applyEntries(entries);
             }
         };
-        void loadLeaderboard();
+
+        const handleLeaderboard = (data: { entries?: Array<{ nickname?: string }> }) => {
+            if (!mounted || !data?.entries) return;
+            applyEntries(data.entries);
+        };
+
+        const handleEnded = (data: { leaderboard?: Array<{ nickname?: string }> }) => {
+            if (!mounted) return;
+            if (data?.leaderboard) {
+                applyEntries(data.leaderboard);
+            }
+        };
+
+        onEvent("leaderboard", handleLeaderboard);
+        onEvent("game_ended", handleEnded);
+        void sync();
+
         return () => {
             mounted = false;
+            offEvent("leaderboard", handleLeaderboard);
+            offEvent("game_ended", handleEnded);
         };
-    }, [pin, fetchWithAuth]);
+    }, [pin, fetchWithAuth, emitWithAck, connectSocket, onEvent, offEvent]);
   // Winner Page Implementation
   return (
     <div className="min-h-screen w-full flex flex-col overflow-hidden" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
@@ -77,7 +115,7 @@ export default function WinnerPage() {
                     transition={{ delay: 1.4 }}
                     className="mb-4 text-center"
                 >
-                    <span className="text-xl font-bold text-[#444] block">{leaders[2]}</span>
+                    <span className="text-xl font-bold text-[#444] block">{leaders[2] || ""}</span>
                  </motion.div>
                  <motion.div 
                     initial={{ height: 0 }}
@@ -106,7 +144,7 @@ export default function WinnerPage() {
                     transition={{ delay: 1.2 }}
                     className="mb-4 text-center"
                 >
-                    <span className="text-2xl font-black text-[#222] block">{leaders[0]}</span>
+                    <span className="text-2xl font-black text-[#222] block">{leaders[0] || ""}</span>
                  </motion.div>
 
                  <motion.div 
@@ -125,7 +163,7 @@ export default function WinnerPage() {
                     transition={{ delay: 1.3 }}
                     className="mb-4 text-center"
                 >
-                    <span className="text-xl font-bold text-[#444] block">{leaders[1]}</span>
+                    <span className="text-xl font-bold text-[#444] block">{leaders[1] || ""}</span>
                  </motion.div>
                  <motion.div 
                     initial={{ height: 0 }}

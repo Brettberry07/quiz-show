@@ -122,20 +122,7 @@ export default function PlayerLeaderboardPage() {
     return <Minus className="w-4 h-4 text-gray-400" />;
   };
 
-  const playerRank = (() => {
-    const byId = playerIdParam ? entries.findIndex((p) => p.playerId === playerIdParam) : -1;
-    if (byId >= 0) return byId + 1;
-    const byName = entries.findIndex((p) => p.nickname === (username || "You"));
-    if (byName >= 0) return byName + 1;
-    return entries.length > 0 ? entries[0].rank : 0;
-  })();
-
-  const playerScore = (() => {
-    const byId = playerIdParam ? entries.find((p) => p.playerId === playerIdParam) : undefined;
-    if (byId) return byId.score;
-    const byName = entries.find((p) => p.nickname === (username || "You"));
-    return byName?.score ?? null;
-  })();
+  // Rank display removed per request; keep entries list only
 
   return (
     <div
@@ -172,21 +159,7 @@ export default function PlayerLeaderboardPage() {
           </motion.div>
         )}
 
-        {/* Your Rank Highlight */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-6"
-        >
-          <p className="text-lg text-[#666] font-medium mb-1">You&apos;re currently in</p>
-          <div className="flex items-center justify-center gap-3">
-            <span className="text-6xl font-black text-[#1a1a1a]">#{playerRank}</span>
-            <span className="text-2xl text-[#666]">place</span>
-          </div>
-          {playerScore !== null && (
-            <p className="mt-2 text-sm font-semibold text-[#3D3030]">Total points: {playerScore.toLocaleString()}</p>
-          )}
-        </motion.div>
+        {/* Rank display intentionally removed; list below shows standings */}
 
         {/* Leaderboard List */}
         <div className="w-full max-w-md space-y-2">
