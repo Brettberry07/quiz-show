@@ -33,6 +33,7 @@ export default function HostGamePage() {
     currentQuestionIndex?: number;
     totalQuestions?: number;
     state?: string;
+    playerCount?: number;
   }
 
   interface SyncStatePayload {
@@ -42,6 +43,7 @@ export default function HostGamePage() {
       currentQuestionIndex?: number;
       totalQuestions?: number;
       state?: string;
+      playerCount?: number;
     };
   }
 
@@ -50,6 +52,35 @@ export default function HostGamePage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [gameState, setGameState] = useState<string>("LOBBY");
+  const [playerCount, setPlayerCount] = useState(0);
+  const [deadlineMs, setDeadlineMs] = useState<number | null>(null);
+  const isQuestionActive = gameState === "QUESTION_ACTIVE";
+
+  useEffect(() => {
+    if (!isQuestionActive || timeRemainingMs === null) {
+      setDeadlineMs(null);
+      return;
+    }
+    setDeadlineMs(Date.now() + timeRemainingMs);
+  }, [isQuestionActive, timeRemainingMs, question?.text]);
+
+  useEffect(() => {
+    if (!deadlineMs) return;
+    let mounted = true;
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, deadlineMs - Date.now());
+      if (mounted) {
+        setTimeRemainingMs(remaining);
+      }
+      if (remaining <= 0) {
+        clearInterval(interval);
+      }
+    }, 250);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [deadlineMs]);
 
   useEffect(() => {
     if (!pin) return;
@@ -65,7 +96,9 @@ export default function HostGamePage() {
         setTimeRemainingMs(data.timeRemainingMs ?? null);
         setCurrentQuestionIndex(data.currentQuestionIndex ?? 0);
         setTotalQuestions(data.totalQuestions ?? 0);
-        setGameState(data.state || "LOBBY");
+        setPlayerCount(data.playerCount ?? 0);
+        const normalized = (data.state || "LOBBY").toString().toUpperCase();
+        setGameState(normalized);
       } catch (error) {
         console.error(error);
       }
@@ -77,7 +110,12 @@ export default function HostGamePage() {
       setTimeRemainingMs(data.timeRemainingMs ?? null);
       setCurrentQuestionIndex(data.currentQuestionIndex ?? 0);
       setTotalQuestions(data.totalQuestions ?? 0);
-      setGameState(data.state || "QUESTION_ACTIVE");
+      setPlayerCount((prev) => data.playerCount ?? prev);
+      setGameState("QUESTION_ACTIVE");
+    };
+
+    const handlePlayerJoined = () => {
+      setPlayerCount((prev) => prev + 1);
     };
 
     const handleLeaderboard = () => {
@@ -93,6 +131,7 @@ export default function HostGamePage() {
     onEvent("question_active", handleQuestion);
     onEvent("leaderboard", handleLeaderboard);
     onEvent("question_ended", handleEnded);
+    onEvent("player_joined", handlePlayerJoined);
 
     void sync();
 
@@ -101,6 +140,7 @@ export default function HostGamePage() {
       offEvent("question_active", handleQuestion);
       offEvent("leaderboard", handleLeaderboard);
       offEvent("question_ended", handleEnded);
+      offEvent("player_joined", handlePlayerJoined);
     };
   }, [pin, emitWithAck, connectSocket, onEvent, offEvent, router]);
 
@@ -142,7 +182,7 @@ export default function HostGamePage() {
                 <div className="flex items-center gap-4">
                     <div className="bg-white/20 px-4 py-2 rounded-lg flex items-center gap-2">
                         <User className="w-5 h-5" />
-                        <span className="font-bold">8</span>
+                      <span className="font-bold">{playerCount}</span>
                     </div>
                     <button onClick={handleManualNext} className="ml-4 text-xs bg-white/10 px-2 py-1 rounded hover:bg-white/20">
                         Skip
@@ -150,7 +190,7 @@ export default function HostGamePage() {
                 </div>
             </div>
             {/* Countdown Bar */}
-             {gameState === 'reading' && (
+             {isQuestionActive && (
                  <motion.div 
                     initial={{ width: "0%" }}
                     animate={{ width: "100%" }}
@@ -167,13 +207,13 @@ export default function HostGamePage() {
         <div className="flex-1 w-full flex items-center justify-center transition-all duration-500">
              <motion.div
                 layout
-                className={`w-full max-w-5xl bg-white shadow-2xl rounded-3xl flex items-center justify-center text-center p-8 transition-all duration-500 ${gameState === 'answering' ? 'min-h-62.5 scale-90 mb-4' : 'min-h-100'}`}
+                className={`w-full max-w-5xl bg-white shadow-2xl rounded-3xl flex items-center justify-center text-center p-8 transition-all duration-500 ${isQuestionActive ? 'min-h-62.5 scale-90 mb-4' : 'min-h-100'}`}
                 >
                 <div className="space-y-6">
                     <span className="inline-block px-4 py-1 bg-black text-white text-sm font-bold uppercase tracking-widest rounded-full mb-4">
                         {question?.category || "Question"}
                     </span>
-                      <h1 className={`${gameState === 'QUESTION_ACTIVE' ? 'text-4xl' : 'text-5xl md:text-7xl'} font-black tracking-tight text-[#1a1a1a] leading-tight transition-all duration-500`}>
+                      <h1 className={`${isQuestionActive ? 'text-4xl' : 'text-5xl md:text-7xl'} font-black tracking-tight text-[#1a1a1a] leading-tight transition-all duration-500`}>
                         {question?.text || "Waiting for question..."}
                     </h1>
                 </div>
@@ -182,7 +222,7 @@ export default function HostGamePage() {
 
         {/* Answer Options - Only revealed in 'answering' state */}
         <AnimatePresence>
-              {gameState === 'QUESTION_ACTIVE' && question && (
+              {isQuestionActive && question && (
                  <motion.div 
                     initial={{ y: 200, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -209,7 +249,7 @@ export default function HostGamePage() {
 
         {/* Timer - Only active in 'answering' state */}
         <div className="absolute left-8 bottom-8 md:scale-125 origin-bottom-left">
-              {gameState === 'QUESTION_ACTIVE' && (
+              {isQuestionActive && (
                  <motion.div 
                     initial={{ scale: 0 }} 
                     animate={{ scale: 1 }}

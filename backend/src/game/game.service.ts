@@ -116,6 +116,19 @@ export class GameService {
 	 */
 	addPlayer(options: JoinGameOptions): PlayerJoinResult {
 		const game = this.getGame(options.pin);
+
+		// Allow reconnections after the game has started by updating socket ID
+		const existingPlayer = game.getPlayer(options.userId);
+		if (existingPlayer) {
+			game.updatePlayerSocket(options.userId, options.socketId);
+			this.playerGameMap.set(options.userId, options.pin);
+			return {
+				playerId: existingPlayer.id,
+				player: existingPlayer,
+				rejoined: true,
+			};
+		}
+
         const player = game.addPlayer(options.userId, options.nickname, options.socketId);
 
         this.playerGameMap.set(options.userId, options.pin);
@@ -194,6 +207,7 @@ export class GameService {
 	 */
 	showLeaderboard(pin: string): void {
 		const game = this.getGame(pin);
+		this.logger.debug(`showLeaderboard: pin=${pin} state=${game.state}`);
 		game.showLeaderboard();
 		this.emitLeaderboard(game);
 	}
@@ -203,10 +217,13 @@ export class GameService {
 	 */
 	nextQuestion(pin: string): boolean {
 		const game = this.getGame(pin);
+		this.logger.debug(`nextQuestion: pin=${pin} state=${game.state} currentIndex=${game.getCurrentQuestionIndex()} total=${game.getTotalQuestions()}`);
 		const hasMore = game.nextQuestion((timeoutPin) => this.handleQuestionTimeout(timeoutPin));
 		if (hasMore) {
+			this.logger.debug(`nextQuestion: advanced pin=${pin} newIndex=${game.getCurrentQuestionIndex()} state=${game.state}`);
 			this.emitQuestionState(game);
 		} else {
+			this.logger.debug(`nextQuestion: game ended pin=${pin}`);
 			this.emitGameEnded(game);
 		}
 		return hasMore;
@@ -352,6 +369,7 @@ export class GameService {
 	private handleQuestionTimeout(pin: string) {
 		try {
 			this.endCurrentQuestion(pin);
+			this.showLeaderboard(pin);
 		} catch (error) {
 			this.logger.error(`Failed to auto-end question for game ${pin}: ${error}`);
 		}
@@ -365,6 +383,7 @@ export class GameService {
 			timeRemainingMs: game.getTimeRemainingMs(),
 			currentQuestionIndex: game.getCurrentQuestionIndex(),
 			totalQuestions: game.getTotalQuestions(),
+			playerCount: game.getPlayerCount(),
 		});
 	}
 

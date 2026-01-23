@@ -113,7 +113,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const emitWithAck = useCallback(
     async <T,>(event: string, payload?: unknown): Promise<T> => {
       const socket = await connectSocket();
-      const response = await socket.timeout(5000).emitWithAck(event, payload);
+      const response = await socket.timeout(8000).emitWithAck(event, payload);
       return response as T;
     },
     [connectSocket]

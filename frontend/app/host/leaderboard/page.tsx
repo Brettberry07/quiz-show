@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { useGame } from "@/context/GameContext";
 import { ArrowRight, Trophy, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useUser } from "@/context/UserContext";
@@ -20,33 +21,60 @@ export default function LeaderboardPage() {
   const searchParams = useSearchParams();
   const pin = searchParams.get("pin") || "";
   const { fetchWithAuth } = useUser();
+  const { emitWithAck, connectSocket, onEvent, offEvent } = useGame();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
-  const isLastQuestion = currentQuestionIndex + 1 >= totalQuestions;
+  const isLastQuestion = totalQuestions > 0 ? currentQuestionIndex + 1 >= totalQuestions : false;
   
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
-    if (!pin) return;
+    if (!pin || pin.length !== 6) return;
     let mounted = true;
-    const loadLeaderboard = async () => {
-      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/leaderboard?limit=10`);
-      const payload = await response.json();
-      if (mounted && response.ok) {
-        setEntries(payload.data.entries || []);
-        setCurrentQuestionIndex(payload.data.currentQuestionIndex || 0);
-        setTotalQuestions(payload.data.totalQuestions || 0);
+
+    const sync = async () => {
+      try {
+        await connectSocket();
+        const payload = await emitWithAck<{ data?: { leaderboard?: LeaderboardEntry[]; currentQuestionIndex?: number; totalQuestions?: number; state?: string } }>("sync_state", { pin });
+        if (!mounted) return;
+        const data = payload?.data ?? {};
+        if (data.leaderboard) setEntries(data.leaderboard);
+        setCurrentQuestionIndex(data.currentQuestionIndex ?? 0);
+        setTotalQuestions(data.totalQuestions ?? 0);
+      } catch (error) {
+        console.error(error);
       }
     };
 
-    void loadLeaderboard();
-    const interval = setInterval(loadLeaderboard, 2000);
+    const handleLeaderboard = (data: { entries?: LeaderboardEntry[]; currentQuestionIndex?: number; totalQuestions?: number }) => {
+      if (!mounted) return;
+      if (data.entries) setEntries(data.entries);
+      if (typeof data.currentQuestionIndex === "number") setCurrentQuestionIndex(data.currentQuestionIndex);
+      if (typeof data.totalQuestions === "number") setTotalQuestions(data.totalQuestions);
+    };
+
+    const handleQuestion = () => {
+      router.push(`/host/game?pin=${pin}`);
+    };
+
+    const handleEnded = () => {
+      router.push(`/host/winner?pin=${pin}`);
+    };
+
+    onEvent("leaderboard", handleLeaderboard);
+    onEvent("question_active", handleQuestion);
+    onEvent("game_ended", handleEnded);
+
+    void sync();
+
     return () => {
       mounted = false;
-      clearInterval(interval);
+      offEvent("leaderboard", handleLeaderboard);
+      offEvent("question_active", handleQuestion);
+      offEvent("game_ended", handleEnded);
     };
-  }, [pin, fetchWithAuth]);
+  }, [pin, emitWithAck, connectSocket, onEvent, offEvent, router]);
 
   // Auto-reveal animation
   useEffect(() => {
@@ -55,15 +83,19 @@ export default function LeaderboardPage() {
   }, []);
 
   const handleNext = async () => {
-    if (!pin) return;
-    const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/question/next`, { method: "POST" });
-    const payload = await response.json();
-    if (!response.ok) return;
+    if (!pin || pin.length !== 6) return;
 
-    if (payload.data.hasMoreQuestions) {
-      router.push(`/host/game?pin=${pin}`);
-    } else {
-      router.push(`/host/winner?pin=${pin}`);
+    try {
+      await connectSocket();
+      const payload = await emitWithAck<{ data?: { hasMore?: boolean } }>("next_question", { pin });
+      const hasMore = payload?.data?.hasMore ?? false;
+      if (hasMore) {
+        router.push(`/host/game?pin=${pin}`);
+      } else {
+        router.push(`/host/winner?pin=${pin}`);
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 

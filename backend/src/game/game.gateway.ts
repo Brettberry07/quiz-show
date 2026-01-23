@@ -95,6 +95,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
           pin: payload.pin,
           playerId: result.playerId,
           player: result.player,
+          rejoined: result.rejoined ?? false,
         },
       };
     } catch (error: any) {
@@ -132,6 +133,10 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         totalQuestions: game.getTotalQuestions(),
         hostId: game.hostUserId,
         quizId: game.getQuizId(),
+        playerCount: game.getPlayerCount(),
+        leaderboard: game.state === 'leaderboard' || game.state === 'ended'
+          ? this.gameService.getLeaderboard(payload.pin, 10)
+          : undefined,
       },
     };
   }
@@ -176,6 +181,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       throw new ForbiddenException('Only the host can end the question');
     }
     this.gameService.endCurrentQuestion(payload.pin);
+    this.gameService.showLeaderboard(payload.pin);
     return { status: 'ok', data: { state: game.state } };
   }
 
@@ -198,11 +204,31 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: AuthedSocket,
   ) {
     const game = this.gameService.getGame(payload.pin);
-    if (!game.isHost(client.data.user?.id ?? '')) {
+    const userId = client.data.user?.id ?? '';
+    this.logger.debug(`next_question requested pin=${payload.pin} user=${userId} state=${game.state}`);
+    if (!game.isHost(userId)) {
+      this.logger.warn(`next_question forbidden pin=${payload.pin} user=${userId}`);
       throw new ForbiddenException('Only the host can advance the game');
     }
-    const hasMore = this.gameService.nextQuestion(payload.pin);
-    return { status: 'ok', data: { hasMore } };
+    try {
+      // Ensure we are in a safe state to advance: auto-end active or processing states
+      if (game.state === GameState.QUESTION_ACTIVE) {
+        this.logger.debug(`next_question: forcing endCurrentQuestion pin=${payload.pin}`);
+        this.gameService.endCurrentQuestion(payload.pin);
+        this.logger.debug(`next_question: forcing showLeaderboard pin=${payload.pin}`);
+        this.gameService.showLeaderboard(payload.pin);
+      } else if (game.state === GameState.PROCESSING) {
+        this.logger.debug(`next_question: processing->leaderboard pin=${payload.pin}`);
+        this.gameService.showLeaderboard(payload.pin);
+      }
+
+      const hasMore = this.gameService.nextQuestion(payload.pin);
+      this.logger.debug(`next_question: result pin=${payload.pin} hasMore=${hasMore}`);
+      return { status: 'ok', data: { hasMore } };
+    } catch (error) {
+      this.logger.error(`next_question error pin=${payload.pin} state=${game.state}: ${error}`, error instanceof Error ? error.stack : undefined);
+      throw error;
+    }
   }
 
   @SubscribeMessage('end_game')

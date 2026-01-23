@@ -61,6 +61,8 @@ export default function PlayPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [gameState, setGameState] = useState<'waiting' | 'playing' | 'adding_question'>('waiting');
+  const [deadlineMs, setDeadlineMs] = useState<number | null>(null);
+  const [playerId, setPlayerId] = useState<string>("");
 
   useEffect(() => {
     if (!pin) return;
@@ -69,10 +71,17 @@ export default function PlayPage() {
     const sync = async () => {
       try {
         await connectSocket();
+        if (pin.length !== 6) throw new Error("Invalid game PIN");
+
         const joinResponse = await emitWithAck<JoinGameResponse>("join_game", { pin, nickname: username || "Player" });
         if (!mounted) return;
         if (!joinResponse || joinResponse.status !== "ok") {
           throw new Error("Failed to join game");
+        }
+        const joinedId = joinResponse.data?.playerId || "";
+        setPlayerId(joinedId);
+        if (joinedId) {
+          sessionStorage.setItem("quizsink_player_id", joinedId);
         }
         const stateResponse = await emitWithAck<SyncStateResponse>("sync_state", { pin });
         const data = stateResponse?.data ?? {};
@@ -103,13 +112,13 @@ export default function PlayPage() {
     const handleEnded = (data: StateEventPayload) => {
       if (!mounted) return;
       const nextIndex = (data?.currentQuestionIndex ?? currentQuestionIndex) + 1;
-      router.push(`/play/leaderboard?pin=${pin}&q=${nextIndex}&total=${totalQuestions}`);
+      router.push(`/play/leaderboard?pin=${pin}&q=${nextIndex}&total=${totalQuestions}&playerId=${playerId}`);
     };
 
     const handleLeaderboard = (data: StateEventPayload) => {
       if (!mounted) return;
       const nextIndex = (data?.currentQuestionIndex ?? currentQuestionIndex) + 1;
-      router.push(`/play/leaderboard?pin=${pin}&q=${nextIndex}&total=${totalQuestions}`);
+      router.push(`/play/leaderboard?pin=${pin}&q=${nextIndex}&total=${totalQuestions}&playerId=${playerId}`);
     };
 
     onEvent("question_active", handleQuestion);
@@ -126,7 +135,33 @@ export default function PlayPage() {
       offEvent("leaderboard", handleLeaderboard);
       offEvent("game_ended", handleLeaderboard);
     };
-  }, [pin, username, emitWithAck, connectSocket, onEvent, offEvent, router, currentQuestionIndex, totalQuestions]);
+  }, [pin, username, emitWithAck, connectSocket, onEvent, offEvent, router, currentQuestionIndex, totalQuestions, playerId]);
+
+  useEffect(() => {
+    if (gameState !== "playing" || timeRemainingMs === null) {
+      setDeadlineMs(null);
+      return;
+    }
+    setDeadlineMs(Date.now() + timeRemainingMs);
+  }, [gameState, timeRemainingMs, question?.text]);
+
+  useEffect(() => {
+    if (!deadlineMs) return;
+    let mounted = true;
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, deadlineMs - Date.now());
+      if (mounted) {
+        setTimeRemainingMs(remaining);
+      }
+      if (remaining <= 0) {
+        clearInterval(interval);
+      }
+    }, 250);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [deadlineMs]);
 
   const handleAnswer = (selectedIndex: number) => {
     if (!pin) return;
@@ -134,7 +169,8 @@ export default function PlayPage() {
       .then((payload) => {
         const points = payload?.data?.points || 0;
         const isCorrect = payload?.data?.isCorrect || false;
-        router.push(`/play/leaderboard?pin=${pin}&q=${currentQuestionIndex + 1}&total=${totalQuestions}&points=${points}&correct=${isCorrect}`);
+        const pid = playerId || sessionStorage.getItem("quizsink_player_id") || "";
+        router.push(`/play/leaderboard?pin=${pin}&q=${currentQuestionIndex + 1}&total=${totalQuestions}&points=${points}&correct=${isCorrect}&playerId=${pid}`);
       })
       .catch((error) => {
         console.error(error);

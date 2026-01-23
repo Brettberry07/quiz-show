@@ -16,12 +16,13 @@ export default function WinnerPage() {
     const [leaders, setLeaders] = useState<string[]>(["Player 1", "Player 2", "Player 3"]);
 
     useEffect(() => {
-        if (!pin) return;
+        if (!pin || pin.length !== 6) return;
         let mounted = true;
         const loadLeaderboard = async () => {
-            const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/leaderboard?limit=3`);
+            const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/leaderboard?limit=3`).catch(() => null);
+            if (!response || !response.ok) return;
             const payload = await response.json();
-            if (mounted && response.ok) {
+            if (mounted) {
                 const entries = payload.data.entries || [];
                 setLeaders([
                     entries[0]?.nickname || "Player 1",

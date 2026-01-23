@@ -144,4 +144,5 @@ export interface SubmitAnswerOptions {
 export interface PlayerJoinResult {
 	playerId: string;
 	player: PlayerState;
+	rejoined?: boolean;
 }

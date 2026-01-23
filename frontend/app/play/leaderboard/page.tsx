@@ -19,32 +19,56 @@ export default function PlayerLeaderboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { username, fetchWithAuth } = useUser();
-  const { connectSocket, onEvent, offEvent } = useGame();
+  const { connectSocket, onEvent, offEvent, emitWithAck } = useGame();
   const pin = searchParams.get("pin") || "";
   const pointsEarned = parseInt(searchParams.get("points") || "0");
   const wasCorrect = searchParams.get("correct") === "true";
+  const playerIdParam = searchParams.get("playerId") || sessionStorage.getItem("quizsink_player_id") || "";
 
   const [showAll, setShowAll] = useState(false);
   const [waitingForNext, setWaitingForNext] = useState(false);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
 
   useEffect(() => {
-    if (!pin) return;
+    if (!pin || pin.length !== 6) return;
     let mounted = true;
-    const pollLeaderboard = async () => {
-      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/leaderboard?limit=10`);
-      const payload = await response.json();
-      if (mounted && response.ok) {
-        setEntries(payload.data.entries || []);
+
+    const sync = async () => {
+      try {
+        await connectSocket();
+        const payload = await emitWithAck<{ data?: { leaderboard?: LeaderboardEntry[]; currentQuestionIndex?: number; totalQuestions?: number } }>("sync_state", { pin });
+        if (!mounted) return;
+        if (payload?.data?.leaderboard) setEntries(payload.data.leaderboard);
+      } catch (error) {
+        console.error(error);
       }
     };
-    void pollLeaderboard();
-    const interval = setInterval(pollLeaderboard, 2000);
-    return () => {
-      mounted = false;
-      clearInterval(interval);
+
+    const onQuestion = () => {
+      router.push(`/play?pin=${pin}`);
     };
-  }, [pin, fetchWithAuth]);
+
+    const onEnded = () => {
+      router.push(`/host/winner?pin=${pin}`);
+    };
+
+    const onLeaderboard = (data: { entries?: LeaderboardEntry[] }) => {
+      if (data?.entries) setEntries(data.entries);
+    };
+
+    void connectSocket();
+    onEvent("question_active", onQuestion);
+    onEvent("game_ended", onEnded);
+    onEvent("leaderboard", onLeaderboard);
+
+    void sync();
+
+    return () => {
+      offEvent("question_active", onQuestion);
+      offEvent("game_ended", onEnded);
+      offEvent("leaderboard", onLeaderboard);
+    };
+  }, [pin, router, connectSocket, onEvent, offEvent, emitWithAck]);
 
   // Auto-reveal animation
   useEffect(() => {
@@ -98,7 +122,20 @@ export default function PlayerLeaderboardPage() {
     return <Minus className="w-4 h-4 text-gray-400" />;
   };
 
-  const playerRank = entries.findIndex((p) => p.nickname === (username || "You")) + 1;
+  const playerRank = (() => {
+    const byId = playerIdParam ? entries.findIndex((p) => p.playerId === playerIdParam) : -1;
+    if (byId >= 0) return byId + 1;
+    const byName = entries.findIndex((p) => p.nickname === (username || "You"));
+    if (byName >= 0) return byName + 1;
+    return entries.length > 0 ? entries[0].rank : 0;
+  })();
+
+  const playerScore = (() => {
+    const byId = playerIdParam ? entries.find((p) => p.playerId === playerIdParam) : undefined;
+    if (byId) return byId.score;
+    const byName = entries.find((p) => p.nickname === (username || "You"));
+    return byName?.score ?? null;
+  })();
 
   return (
     <div
@@ -146,6 +183,9 @@ export default function PlayerLeaderboardPage() {
             <span className="text-6xl font-black text-[#1a1a1a]">#{playerRank}</span>
             <span className="text-2xl text-[#666]">place</span>
           </div>
+          {playerScore !== null && (
+            <p className="mt-2 text-sm font-semibold text-[#3D3030]">Total points: {playerScore.toLocaleString()}</p>
+          )}
         </motion.div>
 
         {/* Leaderboard List */}
