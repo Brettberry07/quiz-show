@@ -78,7 +78,6 @@ export class AuthService {
 			};
 
 			const user = await this.dbService.create(userPayload);
-			// console.log(user);
 			if (!user || !user.id) return Promise.reject(new InternalServerErrorException('Error creating new user'));
 			const { accessToken, refreshToken, refreshTokenHash } = await this.jwtService.rotateTokens(user.id);
 			await this.dbService.SaveRefreshToken(user, refreshTokenHash);
@@ -142,9 +141,8 @@ export class AuthService {
 	async getLoggedIn(accessToken: string): Promise<{ loggedIn: boolean; userId?: string }> {
 		try {
 			return { loggedIn: await this.jwtService.verifyToken(accessToken) };
-		} catch (error) {
+		} catch {
 			// Suppress noisy log output during tests but keep for other environments
-			console.log('Error verifying token', error as Error);
 			return { loggedIn: false };
 		}
 	}
