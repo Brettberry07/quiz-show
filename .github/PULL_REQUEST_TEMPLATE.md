@@ -4,7 +4,7 @@ Explain clearly in plain language
 
 ## Related Issue
 
-Link issue here
+Link issue here (#....)
 
 ## How to test
 
@@ -21,4 +21,5 @@ I agree that:
 [ ] I tested my changes locally  
 [ ] My code follows project conventions  
 [ ] I updated docs if needed  
+[ ] I have added either Brett or Cameron to review the PR
 [ ] This PR is ready for review
