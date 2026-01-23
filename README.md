@@ -1,70 +1,44 @@
-# Quiz Show
+# QuizSink
 
 ## Project overview
-Quiz Show is a real-time classroom quiz game with a NestJS backend and a Next.js frontend. The backend is server-authoritative, handles auth/quiz REST APIs plus game state, and communicates with clients over WebSockets. The frontend provides the host/player experiences and consumes the REST and socket endpoints.
+
+QuizSink is a real-time classroom quiz game with a NestJS backend and a Next.js frontend. The backend is server-authoritative, handles auth/quiz REST APIs plus game state, and communicates with clients over WebSockets. The frontend provides the host/player experiences and consumes the REST and socket endpoints.
+
+## Tech Stack
+
+Frontend: Next.js
+Backend: NestJS
+Database: SQLite
+Realtime: WebSockets
 
 ## Key docs
-- Backend REST endpoints: `backend/REST-GAME-API.md`
-- Backend system design + architecture: `backend/SysDesign.md`
-- Frontend/backend integration notes: `frontend/backend-architecture.txt`
 
-## Repo structure
-- `backend/src`
-  - `app.module.ts`, `main.ts`: NestJS bootstrap
-  - `auth`, `jwt`: login/token flows
-  - `db`, `entities`: database setup and models
-  - `dto`: request/response DTOs
-  - `quiz`, `users`: REST modules
-  - `game`: game services/state
-  - `test`: backend tests
-- `frontend`
-  - `app`: Next.js routes
-  - `components`: shared UI components
-  - `context`: React context providers
-  - `lib`: shared helpers
-  - `public`: static assets
+- Backend REST endpoints: `backend/API.md`
+- Backend system design + architecture: `backend/BackendDoc.md`
+- Frontend Architecture: `frontend/FrontendDoc.md`
 
-## Run locally
-Open two terminals and run the backend and frontend separately.
+## Getting Started
 
-### Backend
-```bash
-cd backend
-npm install
-npm run start:dev
-```
+1. Clone the repo
+2. Install dependencies in frontend and backend folders
+3. Run the dev servers
+4. Open the app in your browser
 
-### Frontend
-```bash
-cd frontend
-npm install
-npm run dev
-```
+Detailed setup lives in docs/onboarding.md
 
-## Linting and tests
-```bash
-# backend
-cd backend
-npm run lint
-npm run test
+## How We Work
 
-# frontend
-cd ../frontend
-npm run lint
-```
+We use GitHub Issues to track work  
+Branch out from the respective branch before making changes
+Every change goes through Pull Requests  
+Maintainers review before merge
+**YOU CANNOT MERGE PR'S YOURSELF**  
 
-## Pull request guidance
-- Branch naming: `feature/<short-summary>`, `fix/<short-summary>`, or `chore/<short-summary>`.
-- Summary: 2–4 bullets describing the change and impact.
-- Checklist: include a short checklist (tests run, docs updated, screenshots attached).
-- Testing: list commands run and results; call out if not run and why.
-- Screenshots: required for UI changes (before/after if visual).
+> [!NOTE]
+> Read `./CONTRIBUTING.md` before your first change
 
-## Issue guidance
-- Title: concise and specific (component + problem).
-- Description: what is happening and where.
-- Repro steps: numbered steps that reliably reproduce the issue.
-- Expected vs actual: explicitly call out both.
-- Logs/console output: paste relevant snippets.
-- Screenshots/video: attach when UI or layout is involved.
-- Acceptance criteria: checklist of what “done” means.
+## Need Help
+
+1. Post questions in GitHub Issues with the `help wanted` tag
+2. Ask Cameron, Brett or Chloe during class
+3. Email `gintherc@bentonvillek12.org` or `berrybr@bentonvillek12.org`
