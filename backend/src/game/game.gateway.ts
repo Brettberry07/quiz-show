@@ -150,7 +150,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     if (!game.isHost(client.data.user?.id ?? '')) {
       throw new ForbiddenException('Only the host can start the game');
     }
-    this.gameService.startGame(payload.pin);
+    await this.gameService.startGame(payload.pin);
     return { status: 'ok', data: { state: GameState.QUESTION_ACTIVE } };
   }
 

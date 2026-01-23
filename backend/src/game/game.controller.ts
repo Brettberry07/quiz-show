@@ -132,13 +132,13 @@ export class GameController {
   }
 
   @Post(":pin/start")
-  startGame(@Param("pin") pin: string, @Request() req: AuthenticatedRequest) {
+  async startGame(@Param("pin") pin: string, @Request() req: AuthenticatedRequest) {
     const game = this.gameService.getGame(pin);
     if (!game.isHost(req.user.id)) {
       throw new ForbiddenException("Only the host can start the game");
     }
 
-    this.gameService.startGame(pin);
+    await this.gameService.startGame(pin);
 
     return {
       message: "Game started",
