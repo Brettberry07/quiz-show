@@ -5,8 +5,10 @@ import Link from 'next/link';
 import Image from "next/image";
 import { Crown, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { useUser } from "@/context/UserContext";
 
 export default function WinnerPage() {
+    const { username } = useUser();
   // Winner Page Implementation
   return (
     <div className="min-h-screen w-full flex flex-col overflow-hidden" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
@@ -17,7 +19,7 @@ export default function WinnerPage() {
             <Image src="/text.svg" alt="QuizSink Logo" width={144} height={144} className="w-36 h-36" />
         </div>
         <div className="flex items-center gap-3 text-white">
-            <span className="text-xl font-medium">Mhiki</span>
+            <span className="text-xl font-medium">{username || "Host"}</span>
             <div className="h-10 w-10 rounded-full bg-[#d9d9d9]" />
         </div>
       </header>
