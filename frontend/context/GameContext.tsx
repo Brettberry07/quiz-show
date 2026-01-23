@@ -75,7 +75,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       const socket = io(`${API_BASE_URL}/game`, {
         auth: { token },
-        transports: ["websocket"],
+        transports: ["websocket", "polling"],
+        reconnectionAttempts: 5,
+        timeout: 10000,
       });
 
       socketRef.current = socket;

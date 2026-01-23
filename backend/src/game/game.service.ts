@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import {
 	PlayerState,
 	CachedQuiz,
@@ -14,6 +14,7 @@ import {
 } from './game.types';
 import { Game } from './game.class';
 import { GameEventsService } from './game-events.service';
+import { QuizService } from '../quiz/quiz.service';
 
 /**
  * GameService - Core Game Manager
@@ -30,7 +31,11 @@ import { GameEventsService } from './game-events.service';
 export class GameService {
 	private readonly logger = new Logger(GameService.name);
 
-	constructor(private readonly gameEvents: GameEventsService) {}
+	constructor(
+		private readonly gameEvents: GameEventsService,
+		@Inject(forwardRef(() => QuizService))
+		private readonly quizService: QuizService,
+	) {}
 	
 	// <PIN, Game> for PIN -> game lookup
 	private readonly activeGames = new Map<string, Game>();
@@ -164,11 +169,24 @@ export class GameService {
 
 	/**
 	 * Start the game - transition from LOBBY to first question
+	 * Refreshes quiz data to include any questions added in the lobby
      * @param pin - The game's PIN
      * @return The started game
 	 */
-	startGame(pin: string): Game {
+	async startGame(pin: string): Promise<Game> {
 		const game = this.getGame(pin);
+		
+		// Refresh quiz data to include questions added in lobby
+		const quizId = game.getQuizId();
+		try {
+			const updatedQuiz = await this.quizService.getQuizForGame(quizId);
+			game.updateQuizData(updatedQuiz);
+			this.logger.log(`Refreshed quiz data for game ${pin} before starting`);
+		} catch (error) {
+			this.logger.warn(`Failed to refresh quiz data for game ${pin}:`, error);
+			// Continue with existing quiz data if refresh fails
+		}
+		
 		game.start((timeoutPin) => this.handleQuestionTimeout(timeoutPin));
 		this.emitQuestionState(game);
 		return game;
@@ -176,13 +194,25 @@ export class GameService {
 
 	/**
 	 * Process answer submission from a player
+	 * Automatically ends the question if all players have answered
      * 
      * @param options - The answer submission options
      * @return ScoreResult type for the submission
 	 */
 	submitAnswer(options: SubmitAnswerOptions): ScoreResult {
 		const game = this.getGame(options.pin);
-		return game.submitAnswer(options.playerId, options.answerIndex);
+		const { scoreResult, allAnswered } = game.submitAnswer(options.playerId, options.answerIndex);
+		
+		// Auto-progress when all players have answered
+		if (allAnswered) {
+			this.logger.log(`All players answered for game ${options.pin}, auto-progressing...`);
+			// Use a small delay to allow the last answer to be processed
+			setTimeout(() => {
+				this.handleQuestionTimeout(options.pin);
+			}, 500);
+		}
+		
+		return scoreResult;
 	}
 
 	/**

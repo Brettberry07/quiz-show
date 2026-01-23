@@ -1,10 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GameService } from './game.service';
+import { GameEventsService } from './game-events.service';
+import { QuizService } from '../quiz/quiz.service';
 import { CachedQuiz, QuestionType } from './game.types';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('GameService', () => {
     let service: GameService;
+    let mockGameEventsService: Partial<GameEventsService>;
+    let mockQuizService: Partial<QuizService>;
     
     const mockQuiz: CachedQuiz = {
         id: 'quiz-1',
@@ -24,8 +28,21 @@ describe('GameService', () => {
     };
     
     beforeEach(async () => {
+        mockGameEventsService = {
+            emitToPin: jest.fn(),
+            setServer: jest.fn(),
+        };
+
+        mockQuizService = {
+            getQuizForGame: jest.fn().mockResolvedValue(mockQuiz),
+        };
+
         const module: TestingModule = await Test.createTestingModule({
-            providers: [GameService],
+            providers: [
+                GameService,
+                { provide: GameEventsService, useValue: mockGameEventsService },
+                { provide: QuizService, useValue: mockQuizService },
+            ],
         }).compile();
         
         service = module.get<GameService>(GameService);

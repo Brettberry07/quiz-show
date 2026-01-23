@@ -111,21 +111,34 @@ describe('Game Class', () => {
         // Be careful game.start() sets questionStartTime using process.hrtime.bigint()
         
         const result = game.submitAnswer('user-1', 0); // Correct answer index is 0
-        expect(result.isCorrect).toBe(true);
-        expect(result.points).toBeGreaterThan(0);
-        expect(game.getPlayer('user-1')?.totalScore).toBe(result.points);
+        expect(result.scoreResult.isCorrect).toBe(true);
+        expect(result.scoreResult.points).toBeGreaterThan(0);
+        expect(result.allAnswered).toBe(true); // Only one player, so all answered
+        expect(game.getPlayer('user-1')?.totalScore).toBe(result.scoreResult.points);
     });
 
     it('should handle wrong answer', () => {
         const result = game.submitAnswer('user-1', 1); // Wrong answer
-        expect(result.isCorrect).toBe(false);
-        expect(result.points).toBe(0);
+        expect(result.scoreResult.isCorrect).toBe(false);
+        expect(result.scoreResult.points).toBe(0);
         expect(game.getPlayer('user-1')?.currentCombo).toBe(0);
     });
 
     it('should throw if answer already submitted', () => {
         game.submitAnswer('user-1', 0);
         expect(() => game.submitAnswer('user-1', 0)).toThrow(BadRequestException);
+    });
+
+    it('should detect when all players have answered', () => {
+        game.addPlayer('user-2', 'Player 2', 'socket-2');
+        
+        // First player answers - not all answered yet
+        const result1 = game.submitAnswer('user-1', 0);
+        expect(result1.allAnswered).toBe(false);
+        
+        // Second player answers - now all answered
+        const result2 = game.submitAnswer('user-2', 1);
+        expect(result2.allAnswered).toBe(true);
     });
   });
 

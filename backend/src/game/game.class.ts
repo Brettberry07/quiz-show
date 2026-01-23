@@ -26,7 +26,7 @@ export class Game {
 	public hostSocketId: string; 
 	public readonly createdAt: Date;
 	
-	private readonly quizData: CachedQuiz; // TODO: Convert to Quiz Object from QuizModule once implemented
+	private quizData: CachedQuiz; // TODO: Convert to Quiz Object from QuizModule once implemented
 	private currentQuestionIndex: number;
 
 	public state: GameState;
@@ -129,6 +129,24 @@ export class Game {
 	}
 
 	/**
+	 * Check if all players have answered the current question
+	 */
+	haveAllPlayersAnswered(): boolean {
+		if (this.state !== GameState.QUESTION_ACTIVE) {
+			return false;
+		}
+		if (this.players.size === 0) {
+			return false;
+		}
+		for (const player of this.players.values()) {
+			if (player.lastAnswer === null) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * Start the game - transition from LOBBY to first question
 	 */
 	start(onQuestionEnd: (pin: string) => void): void {
@@ -187,8 +205,9 @@ export class Game {
 
 	/**
 	 * Submit an answer from a player
+	 * Returns score result and whether all players have now answered
 	 */
-	submitAnswer(userId: string, answerIndex: number): ScoreResult {
+	submitAnswer(userId: string, answerIndex: number): { scoreResult: ScoreResult; allAnswered: boolean } {
 		if (this.state !== GameState.QUESTION_ACTIVE) {
 			throw new BadRequestException('No active question to answer');
 		}
@@ -246,7 +265,12 @@ export class Game {
 			`(+${scoreResult.points} pts, combo: ${player.currentCombo})`
 		);
 
-		return scoreResult;
+		const allAnswered = this.haveAllPlayersAnswered();
+		if (allAnswered) {
+			this.logger.log(`All players have answered question ${this.currentQuestionIndex} in game ${this.pin}`);
+		}
+
+		return { scoreResult, allAnswered };
 	}
 
 	/**
@@ -499,6 +523,20 @@ export class Game {
 	 */
 	getQuizId(): string {
 		return this.quizData.id;
+	}
+
+	/**
+	 * Update quiz data (e.g., to include new questions added in lobby)
+	 */
+	updateQuizData(quizData: CachedQuiz): void {
+		if (this.state !== GameState.LOBBY) {
+			throw new BadRequestException('Cannot update quiz data after game has started');
+		}
+		if (quizData.id !== this.quizData.id) {
+			throw new BadRequestException('Cannot change quiz ID');
+		}
+		this.quizData = quizData;
+		this.logger.log(`Quiz data updated for game ${this.pin}, now has ${quizData.questions.length} questions`);
 	}
 
 	/**
