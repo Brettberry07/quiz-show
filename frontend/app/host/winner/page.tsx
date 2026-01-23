@@ -2,19 +2,19 @@
 
 import { motion } from "framer-motion";
 import Link from 'next/link';
-import { Droplets, Crown } from "lucide-react";
+import Image from "next/image";
+import { Crown, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 export default function WinnerPage() {
   // Winner Page Implementation
   return (
-    <div className="min-h-screen w-full bg-[#dddddd] flex flex-col overflow-hidden">
+    <div className="min-h-screen w-full flex flex-col overflow-hidden" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
       
       {/* Top Header */}
-      <header className="w-full h-16 bg-[#7a7a7a] flex items-center justify-between px-6 shadow-md z-10">
+      <header className="w-full h-16 bg-[#3D3030] flex items-center justify-between px-6 shadow-md z-10">
         <div className="flex items-center gap-3 text-white">
-            <Droplets className="h-8 w-8" />
-            <span className="text-2xl font-black tracking-tight uppercase">QuizSink</span>
+            <Image src="/text.svg" alt="QuizSink Logo" width={144} height={144} className="w-36 h-36" />
         </div>
         <div className="flex items-center gap-3 text-white">
             <span className="text-xl font-medium">Mhiki</span>
@@ -24,11 +24,19 @@ export default function WinnerPage() {
 
       {/* Podium Section */}
       <main className="flex-1 flex items-end justify-center pb-0 px-4 relative">
-        <Link href="/home" className="absolute top-8 right-8 z-20">
-            <Button variant="secondary" className="bg-[#7a7a7a] text-white hover:bg-[#555]">
-                Back Home
-            </Button>
-        </Link>
+        <div className="absolute top-8 right-8 z-20 flex gap-3">
+            <Link href="/host/review">
+                <Button variant="secondary" className="bg-[#A59A9A] text-[#333] hover:bg-[#958A8A] border-b-4 border-[#857A7A] active:border-b-0 active:translate-y-1 transition-all flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4" />
+                    Review Questions
+                </Button>
+            </Link>
+            <Link href="/home">
+                <Button variant="secondary" className="bg-[#3D3030] text-white hover:bg-[#2D2020] border-b-4 border-[#1D1010] active:border-b-0 active:translate-y-1 transition-all">
+                    Back Home
+                </Button>
+            </Link>
+        </div>
         
          <div className="flex items-end justify-center w-full max-w-4xl gap-4 md:gap-8 h-full pb-0">
             
@@ -46,7 +54,7 @@ export default function WinnerPage() {
                     initial={{ height: 0 }}
                     animate={{ height: "30vh" }} 
                     transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-                    className="w-full bg-[#7a7a7a] shadow-lg"
+                    className="w-full bg-[#3D3030] shadow-lg"
                  />
             </div>
 
@@ -76,7 +84,7 @@ export default function WinnerPage() {
                     initial={{ height: 0 }}
                     animate={{ height: "55vh" }}
                     transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                    className="w-full bg-[#7a7a7a] shadow-xl"
+                    className="w-full bg-[#3D3030] shadow-xl"
                  />
             </div>
 
@@ -94,7 +102,7 @@ export default function WinnerPage() {
                     initial={{ height: 0 }}
                     animate={{ height: "40vh" }} 
                     transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-                    className="w-full bg-[#7a7a7a] shadow-lg"
+                    className="w-full bg-[#3D3030] shadow-lg"
                  />
             </div>
          </div>

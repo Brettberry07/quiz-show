@@ -2,15 +2,31 @@
 
 import { Card } from "@/components/ui/Card";
 import { motion, AnimatePresence } from "framer-motion";
-import { Waves, Hand, Droplets, Plus, X } from "lucide-react";
+import { Waves, Hand, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { QuestionBuilder, Question } from "@/components/QuestionBuilder";
 import { Button } from "@/components/ui/Button";
+import { useUser } from "@/context/UserContext";
+import { useGame } from "@/context/GameContext";
+
+const ANSWER_ICONS = [
+  <Waves key="wave" className="w-16 h-16 md:w-24 md:h-24 fill-current" />,
+  <div key="circle" className="w-16 h-16 md:w-24 md:h-24 rounded-full border-8 border-current" />,
+  <Hand key="hand" className="w-16 h-16 md:w-24 md:h-24 fill-current" />,
+  <svg key="svg" className="w-16 h-16 md:w-24 md:h-24 fill-current" viewBox="0 0 64 64" fill="currentColor"><path d="M50 16h-8v-4a6 6 0 00-12 0v4H18a6 6 0 00-6 6v4a6 6 0 006 6h2v18a6 6 0 006 6h12a6 6 0 006-6V32h2a6 6 0 006-6v-4a6 6 0 00-6-6zm-20-4a2 2 0 114 0v4h-4v-4zm18 14a2 2 0 01-2 2h-4v20a2 2 0 01-2 2H28a2 2 0 01-2-2V28h-4a2 2 0 01-2-2v-4a2 2 0 012-2h24a2 2 0 012 2v4z" /></svg>
+];
 
 export default function PlayPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { username } = useUser();
+  const { currentQuiz } = useGame();
+  const currentQuestionNum = parseInt(searchParams.get("q") || "1");
+  const totalQuestions = currentQuiz?.questions.length || parseInt(searchParams.get("total") || "1");
+  const currentQuestion = currentQuiz?.questions[currentQuestionNum - 1];
+  
   const [gameState, setGameState] = useState<'waiting' | 'playing' | 'adding_question'>('waiting');
 
   useEffect(() => {
@@ -24,8 +40,11 @@ export default function PlayPage() {
     return () => clearTimeout(timer);
   }, [gameState]);
 
-  const handleAnswer = () => {
-    router.push("/host/winner");
+  const handleAnswer = (selectedIndex: number) => {
+    const isCorrect = currentQuestion ? selectedIndex === currentQuestion.correctAnswer : false;
+    // Calculate points based on speed (simulated)
+    const points = isCorrect ? Math.floor(Math.random() * 500) + 500 : 0;
+    router.push(`/play/leaderboard?q=${currentQuestionNum}&total=${totalQuestions}&points=${points}&correct=${isCorrect}`);
   };
 
   const handleSuggestQuestion = () => {
@@ -40,18 +59,17 @@ export default function PlayPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f0f0f0] flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
        {/* Top Bar */}
-       <header className="sticky top-0 z-40 w-full bg-[#6b7280] text-white h-16 flex items-center justify-between px-6 shadow-md">
+       <header className="sticky top-0 z-40 w-full bg-[#3D3030] text-white h-16 flex items-center justify-between px-6 shadow-md">
         <div className="flex items-center gap-4">
           <Link href="/home" className="flex items-center gap-2">
-            <Droplets className="h-8 w-8" />
-            <span className="text-2xl font-black tracking-tight">QuizSink</span>
+            <img src="/text.svg" alt="QuizSink Logo" className="w-36 h-36" />
           </Link>
         </div>
         
         <div className="flex items-center gap-4">
-            <span className="hidden md:inline font-medium ml-4">Berrybr</span>
+            <span className="hidden md:inline font-medium ml-4">{username || "Player"}</span>
             <div className="h-10 w-10 rounded-full bg-white/80" />
         </div>
       </header>
@@ -72,7 +90,7 @@ export default function PlayPage() {
                 </div>
 
                 <div className="flex justify-center py-4">
-                     <div className="h-16 w-16 border-4 border-[#ccc] border-t-[#333] rounded-full animate-spin" />
+                     <div className="h-16 w-16 border-4 border-[#A59A9A] border-t-[#3D3030] rounded-full animate-spin" />
                 </div>
 
                 <motion.div 
@@ -84,7 +102,7 @@ export default function PlayPage() {
                         <h3 className="font-bold text-lg mb-2">Got a good question?</h3>
                         <Button 
                             onClick={handleSuggestQuestion}
-                            className="w-full bg-[#333] text-white hover:bg-black font-bold h-12"
+                            className="w-full bg-[#202020] text-white hover:bg-[#333] font-bold h-12 border-b-4 border-[#111] active:border-b-0 active:translate-y-1 transition-all"
                         >
                             <Plus className="w-4 h-4 mr-2" />
                             Suggest a Question
@@ -115,7 +133,7 @@ export default function PlayPage() {
                 </div>
                 <QuestionBuilder 
                     onAddQuestion={handleQuestionAdded}
-                    creatorName="Berrybr" // Hardcoded for simulation
+                    creatorName={username || "Player"} 
                 />
              </motion.div>
           )}
@@ -127,52 +145,37 @@ export default function PlayPage() {
                 animate={{ opacity: 1 }}
                 className="w-full flex flex-col flex-1 h-full"
              >
-                 {/* Question Area (Placeholder) */}
+                 {/* Question Area */}
                  <div className="flex-1 flex items-center justify-center w-full mb-8">
                     <motion.div 
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         className="bg-white p-8 rounded-2xl shadow-lg max-w-2xl w-full text-center min-h-50 flex items-center justify-center"
                     >
-                        <h2 className="text-4xl font-black text-black">What is the capital of France?</h2>
+                        <h2 className="text-4xl font-black text-black">
+                          {currentQuestion?.question || "Loading question..."}
+                        </h2>
                     </motion.div>
                  </div>
 
                  {/* Answer Grid */}
                  <div className="w-full max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4 h-auto sm:h-96 pb-8">
-                    <GameButton 
-                        onClick={handleAnswer}
-                        icon={<Waves className="w-16 h-16 md:w-24 md:h-24 fill-current" />} 
-                        color="bg-[#a3a3a3]" // Gray
-                        delay={0}
-                    />
-                    <GameButton 
-                        onClick={handleAnswer}
-                        icon={<div className="w-16 h-16 md:w-24 md:h-24 rounded-full border-8 border-current" />} 
-                        color="bg-[#a3a3a3]" 
-                        delay={0.1}
-                    />
-                    <GameButton 
-                        onClick={handleAnswer}
-                        icon={<Hand className="w-16 h-16 md:w-24 md:h-24 fill-current" />} 
-                        color="bg-[#a3a3a3]" 
-                        delay={0.2}
-                    />
-                    <GameButton 
-                        onClick={handleAnswer}
-                        icon={
-                            <svg
-                            className="w-16 h-16 md:w-24 md:h-24 fill-current"
-                            viewBox="0 0 64 64"
-                            fill="currentColor"
-                            aria-hidden="true"
-                        >
-                            <path d="M50 16h-8v-4a6 6 0 00-12 0v4H18a6 6 0 00-6 6v4a6 6 0 006 6h2v18a6 6 0 006 6h12a6 6 0 006-6V32h2a6 6 0 006-6v-4a6 6 0 00-6-6zm-20-4a2 2 0 114 0v4h-4v-4zm18 14a2 2 0 01-2 2h-4v20a2 2 0 01-2 2H28a2 2 0 01-2-2V28h-4a2 2 0 01-2-2v-4a2 2 0 012-2h24a2 2 0 012 2v4z" />
-                        </svg>
-                        } 
-                        color="bg-[#a3a3a3]" 
-                        delay={0.3}
-                    />
+                    {currentQuestion?.options.map((option, index) => (
+                      <GameButton 
+                        key={index}
+                        onClick={() => handleAnswer(index)}
+                        icon={ANSWER_ICONS[index % ANSWER_ICONS.length]} 
+                        color="bg-[#A59A9A]"
+                        delay={index * 0.1}
+                      />
+                    )) || (
+                      <>
+                        <GameButton onClick={() => handleAnswer(0)} icon={ANSWER_ICONS[0]} color="bg-[#A59A9A]" delay={0} />
+                        <GameButton onClick={() => handleAnswer(1)} icon={ANSWER_ICONS[1]} color="bg-[#A59A9A]" delay={0.1} />
+                        <GameButton onClick={() => handleAnswer(2)} icon={ANSWER_ICONS[2]} color="bg-[#A59A9A]" delay={0.2} />
+                        <GameButton onClick={() => handleAnswer(3)} icon={ANSWER_ICONS[3]} color="bg-[#A59A9A]" delay={0.3} />
+                      </>
+                    )}
                  </div>
              </motion.div>
           )}

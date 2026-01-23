@@ -71,14 +71,14 @@ export function QuestionBuilder({ onAddQuestion, creatorName = "You" }: Question
   const optionLabels = ["A", "B", "C", "D"];
 
   return (
-    <div className="bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
+    <div className="bg-white rounded-3xl shadow-lg border border-[#A59A9A] overflow-hidden">
       {/* Question Input Area */}
-      <div className="p-8 bg-white flex flex-col items-center justify-center min-h-40 border-b border-slate-100 shadow-sm relative z-0">
+      <div className="p-8 bg-white flex flex-col items-center justify-center min-h-40 border-b border-[#A59A9A]/30 shadow-sm relative z-0">
          
          {/* Creator Badge */}
-         <div className="absolute top-4 left-4 flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
-            <UserCircle2 className="w-4 h-4 text-slate-500" />
-            <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">
+         <div className="absolute top-4 left-4 flex items-center gap-2 bg-[#A59A9A] px-3 py-1.5 rounded-full border border-[#8B8080]">
+            <UserCircle2 className="w-4 h-4 text-[#3D3030]" />
+            <span className="text-xs font-bold text-[#3D3030] uppercase tracking-wide">
               Creator: {creatorName}
             </span>
          </div>
@@ -87,12 +87,12 @@ export function QuestionBuilder({ onAddQuestion, creatorName = "You" }: Question
            value={currentQuestion}
            onChange={(e) => setCurrentQuestion(e.target.value)}
            placeholder="Start typing your question here..."
-           className="bg-slate-50 border-2 border-slate-200 shadow-inner text-center text-xl md:text-2xl font-bold h-20 rounded-xl max-w-3xl focus:ring-4 focus:ring-blue-100 focus:border-blue-400"
+           className="bg-[#e5e5e5] border-2 border-[#cfcfcf] shadow-inner text-center text-xl md:text-2xl font-bold h-20 rounded-xl max-w-3xl focus:ring-4 focus:ring-[#A59A9A]/30 focus:border-[#3D3030]"
          />
       </div>
 
       {/* Answer Options Area */}
-      <div className="p-6 md:p-8 bg-slate-50/50">
+      <div className="p-6 md:p-8 bg-[#f5f5f5]">
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
              {options.map((option, index) => (
                  <div 
@@ -107,7 +107,7 @@ export function QuestionBuilder({ onAddQuestion, creatorName = "You" }: Question
                     }`}>
                         <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center gap-2">
-                               <span className="font-black text-slate-400/50 text-2xl">{optionLabels[index]}</span>
+                               <span className="font-black text-[#3D3030]/30 text-2xl">{optionLabels[index]}</span>
                             </div>
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                                 correctOption === index 
@@ -121,7 +121,7 @@ export function QuestionBuilder({ onAddQuestion, creatorName = "You" }: Question
                             value={option}
                             onChange={(e) => handleOptionChange(index, e.target.value)}
                             placeholder={`Answer option ${index + 1}`}
-                            className="bg-white/90 border-transparent shadow-sm focus:border-slate-300 font-semibold text-lg py-6"
+                            className="bg-white/90 border-transparent shadow-sm focus:border-[#A59A9A] font-semibold text-lg py-6"
                             onClick={(e) => e.stopPropagation()} 
                         />
                     </div>
@@ -129,10 +129,10 @@ export function QuestionBuilder({ onAddQuestion, creatorName = "You" }: Question
              ))}
          </div>
          
-         <div className="flex justify-end pt-2 border-t border-slate-200">
+         <div className="flex justify-end pt-2 border-t border-[#A59A9A]/30">
            <Button 
              onClick={handleAddQuestion}
-             className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-10 py-4 rounded-xl shadow-lg border-b-4 border-black active:border-b-0 active:translate-y-1 transition-all flex items-center gap-2 text-lg"
+             className="bg-[#202020] hover:bg-[#333] text-white font-bold px-10 py-4 rounded-xl shadow-lg border-b-4 border-[#111] active:border-b-0 active:translate-y-1 transition-all flex items-center gap-2 text-lg"
            >
              <Plus className="w-6 h-6" />
              Add Question

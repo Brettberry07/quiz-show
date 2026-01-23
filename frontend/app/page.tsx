@@ -4,17 +4,21 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { Droplets } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useUser } from "@/context/UserContext";
 
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [usernameInput, setUsernameInput] = useState("");
+  const { setUsername } = useUser();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!usernameInput.trim()) return;
     setLoading(true);
+    setUsername(usernameInput.trim());
     // Simulate network delay
     setTimeout(() => {
         router.push("/home");
@@ -22,15 +26,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f1f1f1] text-[#111]">
-      {/* Top Bar - Clean, just branding */}
-      <header className="w-full bg-[#7a7a7a] text-white shadow-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/15">
-              <Droplets className="h-6 w-6" />
-            </div>
-            <span className="text-xl font-black tracking-tight">QuizSink</span>
+    <div className="min-h-screen w-full text-[#111]" style={{ backgroundImage: "url('/TileBG.svg')", backgroundRepeat: "repeat", backgroundSize: "auto" }}>
+      {/* Top Bar - Same as Shell */}
+      <header className="sticky top-0 z-40 w-full  bg-[#3D3030] text-white h-16 flex items-center justify-between px-6 shadow-md">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <img src="/text.svg" alt="QuizSink Logo" className="w-36 h-36" />
+
           </div>
         </div>
       </header>
@@ -43,42 +45,42 @@ export default function LoginPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full max-w-sm"
+          className="w-full max-w-2xl"
         >
-          <div className="mb-8 text-center">
-            <h1
-              className="text-6xl font-bold tracking-tight text-[#1a1a1a] drop-shadow-sm uppercase"
-              style={{ fontFamily: "Jaro" }}
-            >
-              QuizSink
-            </h1>
+          
+        <div className="bg-white rounded-lg shadow-lg p-8 ">
+        <div className="mb-8 text-center">
+          <img src="/QuizSink.svg" alt="QuizSink Logo" className="w-90 mx-auto" />
+        </div>
+
+        <Card className="border-none bg-[#A59A9A] p-6 shadow-xl rounded-md">
+          <form onSubmit={handleLogin} className="space-y-4">
+          
+          <div className="space-y-2">
+            <Input
+            type="text"
+            placeholder="Username"
+            value={usernameInput}
+            onChange={(e) => setUsernameInput(e.target.value)}
+            className="h-14 rounded-md border-b-4 border-[#cfcfcf] bg-[#e5e5e5] px-4 text-center text-xl font-bold text-[#555] placeholder:text-[#999] focus-visible:ring-0 focus-visible:border-[#555] transition-all"
+            />
           </div>
 
-          <Card className="border-none bg-[#9ca3af] p-6 shadow-xl rounded-md">
-            <form onSubmit={handleLogin} className="space-y-4">
-              
-              <div className="space-y-2">
-                <Input
-                  type="text"
-                  placeholder="Username"
-                  className="h-14 rounded-md border-b-4 border-[#cfcfcf] bg-[#e5e5e5] px-4 text-center text-xl font-bold text-[#555] placeholder:text-[#999] focus-visible:ring-0 focus-visible:border-[#555] transition-all"
-                />
-              </div>
+          <div className="pt-2">
+            <Button
+            type="submit"
+            disabled={loading}
+            className="h-14 w-full rounded-md border-b-4 border-[#111] bg-[#202020] text-xl font-bold text-white hover:bg-[#222] hover:border-black active:border-b-0 active:translate-y-1 transition-all disabled:opacity-70"
+            >
+            <span className="flex items-center justify-center">
+          {loading ? "Logging in..." : "Login"}
+            </span>
+            </Button>
+          </div>
 
-              <div className="pt-2">
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="h-14 w-full rounded-md border-b-4 border-[#111] bg-[#333] text-xl font-bold text-white hover:bg-[#222] hover:border-black active:border-b-0 active:translate-y-1 transition-all disabled:opacity-70"
-                >
-                  <span className="flex items-center justify-center">
-                    {loading ? "Logging in..." : "Login"}
-                  </span>
-                </Button>
-              </div>
-
-            </form>
-          </Card>
+          </form>
+        </Card>
+        </div>
         </motion.div>
       </main>
     </div>
