@@ -8,10 +8,7 @@ async function bootstrap() {
 
 	// Enable CORS for all origins bc screw security
   // ! In production, CORS would be restricted to frontend and other trusted origins
-	app.enableCors({
-			origin: true, 
-			credentials: true,
-	});
+	app.enableCors();
 
 	app.useGlobalPipes(
 		new ValidationPipe({
