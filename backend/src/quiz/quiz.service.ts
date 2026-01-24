@@ -96,7 +96,9 @@ export class QuizService {
    * @returns Array of quiz summaries
    */
   async findAll(): Promise<ReturnType<Quiz['getSummary']>[]> {
-    const quizzes = await this.quizRepository.find();
+    const quizzes = await this.quizRepository.find({
+      relations: ['questions'],
+    });
     return quizzes.map((quiz) =>
       this.toDomainQuiz(quiz).getSummary()
     );
@@ -109,7 +111,10 @@ export class QuizService {
    * @returns Array of quiz summaries owned by the host
    */
   async findAllByHost(hostId: string): Promise<ReturnType<Quiz['getSummary']>[]> {
-    const quizzes = await this.quizRepository.find({ where: { hostId } });
+    const quizzes = await this.quizRepository.find({ 
+      where: { hostId },
+      relations: ['questions'],
+    });
     return quizzes.map((quiz) => this.toDomainQuiz(quiz).getSummary());
   }
 
