@@ -122,7 +122,10 @@ export class QuizService {
    * @throws NotFoundException if quiz doesn't exist
    */
   async findOne(id: string): Promise<Quiz> {
-    const quiz = await this.quizRepository.findOne({ where: { id } });
+    const quiz = await this.quizRepository.findOne({ 
+      where: { id },
+      relations: ['questions'],
+    });
     if (!quiz) {
       throw new NotFoundException(`Quiz with ID ${id} not found`);
     }
@@ -371,20 +374,23 @@ export class QuizService {
    * @returns Stats about stored quizzes
    */
   async getStats() {
-    const quizzes = await this.quizRepository.find();
-    const totalQuestions = quizzes.reduce((sum, q) => sum + (q.questions?.length || 0), 0);
+    const totalQuizzes = await this.quizRepository.count();
+    const totalQuestions = await this.questionRepository.count();
     
     return {
-      totalQuizzes: quizzes.length,
+      totalQuizzes,
       totalQuestions,
-      averageQuestionsPerQuiz: quizzes.length > 0 
-        ? Math.round(totalQuestions / quizzes.length * 10) / 10 
+      averageQuestionsPerQuiz: totalQuizzes > 0 
+        ? Math.round(totalQuestions / totalQuizzes * 10) / 10 
         : 0,
     };
   }
 
   private async saveQuiz(quiz: Quiz): Promise<void> {
-    const quizEntity = await this.quizRepository.findOne({ where: { id: quiz.id } });
+    const quizEntity = await this.quizRepository.findOne({ 
+      where: { id: quiz.id },
+      relations: ['questions'],
+    });
     if (!quizEntity) {
       throw new NotFoundException(`Quiz with ID ${quiz.id} not found`);
     }
