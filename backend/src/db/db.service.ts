@@ -41,7 +41,7 @@ export class DbService {
 		return user;
 	}
 	
-	async SaveRefreshToken(user: User, refreshTokenHash: string): Promise<void> {
+	async saveRefreshToken(user: User, refreshTokenHash: string): Promise<void> {
 		user.refreshTokenHash = refreshTokenHash;
 		await this.userRepository.save(user);
 	}
