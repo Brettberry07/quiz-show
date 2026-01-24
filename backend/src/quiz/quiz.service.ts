@@ -321,7 +321,7 @@ export class QuizService {
     const removed = quiz.removeQuestion(questionId);
     if (removed) {
       await this.questionRepository.delete({ id: questionId });
-      await this.saveQuiz(quiz);
+      await this.quizRepository.update({ id: quizId }, { updatedAt: new Date() });
     }
     return removed;
   }
