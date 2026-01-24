@@ -8,7 +8,7 @@ import {
 import { DbService } from '../db/db.service';
 import { JwtService } from '../jwt/jwt.service';
 
-import { loginUserDto } from 'src/dto/loginUser.dto';
+import { LoginUserDto } from 'src/dto/loginUser.dto';
 import { User } from 'src/entities/user.entity';
 
 @Injectable()
@@ -36,7 +36,7 @@ export class AuthService {
 	 * console.log(result.accessToken);   // JWT access token
 	 * ```
 	 */
-	async login(loginUserDto: loginUserDto): Promise<{ message: string; userID: string; accessToken: string; refreshToken: string; }> {
+	async login(loginUserDto: LoginUserDto): Promise<{ message: string; userID: string; accessToken: string; refreshToken: string; }> {
 		const user: User | null = await this.dbService.findOne(undefined, loginUserDto.username);
 
 		if(!user) {
@@ -47,7 +47,7 @@ export class AuthService {
 		if(!user.id) return Promise.reject(new BadRequestException('User not found'));
 		const tokens = await this.jwtService.rotateTokens(user.id);
 
-		await this.dbService.SaveRefreshToken(user, tokens.refreshTokenHash);
+		await this.dbService.saveRefreshToken(user, tokens.refreshTokenHash);
 		return {
 			message: 'User logged in successfully',
 			userID: user.id,
@@ -70,7 +70,7 @@ export class AuthService {
 	 * console.log(result); // { message: 'User registered successfully', userID: 'uuid' }
 	 * ```
 	 */
-	async register(loginUserDto: loginUserDto): Promise<{ message: string; userID: string; accessToken: string; refreshToken: string; }> {
+	async register(loginUserDto: LoginUserDto): Promise<{ message: string; userID: string; accessToken: string; refreshToken: string; }> {
 		const userPayload: Partial<User> = {
 				username: loginUserDto.username,
 				createdAt: new Date(),
@@ -80,7 +80,7 @@ export class AuthService {
 			const user = await this.dbService.create(userPayload);
 			if (!user || !user.id) return Promise.reject(new InternalServerErrorException('Error creating new user'));
 			const { accessToken, refreshToken, refreshTokenHash } = await this.jwtService.rotateTokens(user.id);
-			await this.dbService.SaveRefreshToken(user, refreshTokenHash);
+			await this.dbService.saveRefreshToken(user, refreshTokenHash);
 
 			return {
 				message: 'User registered successfully',
@@ -129,7 +129,7 @@ export class AuthService {
 
 		const { accessToken, refreshToken: newRefreshToken, refreshTokenHash } = await this.jwtService.rotateTokens(user.id);
 
-		await this.dbService.SaveRefreshToken(user, refreshTokenHash);
+		await this.dbService.saveRefreshToken(user, refreshTokenHash);
 
 		return {
 			message: 'Token refreshed successfully',

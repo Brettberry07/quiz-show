@@ -13,7 +13,7 @@ import { AuthService } from "./auth.service";
 import { BodyRequiredGuard } from "./body-required.guard";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { RefreshUserTokensDto } from "../dto/refreshUserTokens.dto";
-import { loginUserDto } from "../dto/loginUser.dto";
+import { LoginUserDto } from "../dto/loginUser.dto";
 
 interface AuthenticatedRequest {
   user: {
@@ -57,7 +57,7 @@ export class AuthController {
    */
   @Post("login")
   @UseGuards(BodyRequiredGuard) // Checks input before hitting route
-  async login(@Body() loginUserDto: loginUserDto) {
+  async login(@Body() loginUserDto: LoginUserDto) {
     const result = await this.authService.login(loginUserDto);
     return {
       access_token: result.accessToken,

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Delete, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Param, Delete, UseGuards, Request, NotFoundException } from '@nestjs/common';
 import { DbService } from '../db/db.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -20,11 +20,10 @@ export class UsersController {
 	async findAll() {
 		const users = await this.usersService.findAll();
 		if (!users.length) {
-			return { message: 'No users found', status: 404 };
+			throw new NotFoundException('No users found');
 		}
 		return {
 			message: 'Users retrieved successfully',
-			status: 200,
 			data: users.map((user) => ({
 				id: user.id,
 				username: user.username,
@@ -37,12 +36,11 @@ export class UsersController {
 	async findOne(@Request() req: AuthenticatedRequest) {
 		const user = await this.usersService.findOne(req.user.id);
 		if (!user) {
-			return { message: 'User not found', status: 404, data: undefined };
+			throw new NotFoundException('User not found');
 		}
 
 		return {
 			message: 'User retrieved successfully',
-			status: 200,
 			data: {
 				id: user.id,
 				username: user.username,
@@ -55,11 +53,10 @@ export class UsersController {
 	async deleteUser(@Param('uuid') uuid: string) {
 		const user = await this.usersService.remove(uuid);
 		if (!user) {
-			return { message: 'User not found', status: 404, data: undefined };
+			throw new NotFoundException('User not found');
 		}
 		return {
 			message: 'User deleted successfully',
-			status: 200,
 			data: {
 				id: user.id,
 				username: user.username,

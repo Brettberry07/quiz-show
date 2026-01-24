@@ -96,7 +96,9 @@ export class QuizService {
    * @returns Array of quiz summaries
    */
   async findAll(): Promise<ReturnType<Quiz['getSummary']>[]> {
-    const quizzes = await this.quizRepository.find();
+    const quizzes = await this.quizRepository.find({
+      relations: ['questions'],
+    });
     return quizzes.map((quiz) =>
       this.toDomainQuiz(quiz).getSummary()
     );
@@ -109,7 +111,10 @@ export class QuizService {
    * @returns Array of quiz summaries owned by the host
    */
   async findAllByHost(hostId: string): Promise<ReturnType<Quiz['getSummary']>[]> {
-    const quizzes = await this.quizRepository.find({ where: { hostId } });
+    const quizzes = await this.quizRepository.find({ 
+      where: { hostId },
+      relations: ['questions'],
+    });
     return quizzes.map((quiz) => this.toDomainQuiz(quiz).getSummary());
   }
 
@@ -122,7 +127,10 @@ export class QuizService {
    * @throws NotFoundException if quiz doesn't exist
    */
   async findOne(id: string): Promise<Quiz> {
-    const quiz = await this.quizRepository.findOne({ where: { id } });
+    const quiz = await this.quizRepository.findOne({ 
+      where: { id },
+      relations: ['questions'],
+    });
     if (!quiz) {
       throw new NotFoundException(`Quiz with ID ${id} not found`);
     }
@@ -318,7 +326,7 @@ export class QuizService {
     const removed = quiz.removeQuestion(questionId);
     if (removed) {
       await this.questionRepository.delete({ id: questionId });
-      await this.saveQuiz(quiz);
+      await this.quizRepository.update({ id: quizId }, { updatedAt: new Date() });
     }
     return removed;
   }
@@ -371,20 +379,23 @@ export class QuizService {
    * @returns Stats about stored quizzes
    */
   async getStats() {
-    const quizzes = await this.quizRepository.find();
-    const totalQuestions = quizzes.reduce((sum, q) => sum + (q.questions?.length || 0), 0);
+    const totalQuizzes = await this.quizRepository.count();
+    const totalQuestions = await this.questionRepository.count();
     
     return {
-      totalQuizzes: quizzes.length,
+      totalQuizzes,
       totalQuestions,
-      averageQuestionsPerQuiz: quizzes.length > 0 
-        ? Math.round(totalQuestions / quizzes.length * 10) / 10 
+      averageQuestionsPerQuiz: totalQuizzes > 0 
+        ? Math.round(totalQuestions / totalQuizzes * 10) / 10 
         : 0,
     };
   }
 
   private async saveQuiz(quiz: Quiz): Promise<void> {
-    const quizEntity = await this.quizRepository.findOne({ where: { id: quiz.id } });
+    const quizEntity = await this.quizRepository.findOne({ 
+      where: { id: quiz.id },
+      relations: ['questions'],
+    });
     if (!quizEntity) {
       throw new NotFoundException(`Quiz with ID ${quiz.id} not found`);
     }
