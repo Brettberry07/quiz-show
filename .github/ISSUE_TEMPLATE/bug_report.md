@@ -1,4 +1,4 @@
-Name: Bug report
+Name: Bug report: Short summary
 About: Report the thing that's broken
 
 ## Description
