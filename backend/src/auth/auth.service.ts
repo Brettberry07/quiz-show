@@ -8,7 +8,7 @@ import {
 import { DbService } from '../db/db.service';
 import { JwtService } from '../jwt/jwt.service';
 
-import { loginUserDto } from 'src/dto/loginUser.dto';
+import { LoginUserDto } from 'src/dto/loginUser.dto';
 import { User } from 'src/entities/user.entity';
 
 @Injectable()
@@ -36,7 +36,7 @@ export class AuthService {
 	 * console.log(result.accessToken);   // JWT access token
 	 * ```
 	 */
-	async login(loginUserDto: loginUserDto): Promise<{ message: string; userID: string; accessToken: string; refreshToken: string; }> {
+	async login(loginUserDto: LoginUserDto): Promise<{ message: string; userID: string; accessToken: string; refreshToken: string; }> {
 		const user: User | null = await this.dbService.findOne(undefined, loginUserDto.username);
 
 		if(!user) {
@@ -70,7 +70,7 @@ export class AuthService {
 	 * console.log(result); // { message: 'User registered successfully', userID: 'uuid' }
 	 * ```
 	 */
-	async register(loginUserDto: loginUserDto): Promise<{ message: string; userID: string; accessToken: string; refreshToken: string; }> {
+	async register(loginUserDto: LoginUserDto): Promise<{ message: string; userID: string; accessToken: string; refreshToken: string; }> {
 		const userPayload: Partial<User> = {
 				username: loginUserDto.username,
 				createdAt: new Date(),

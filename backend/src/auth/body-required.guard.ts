@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { Request } from "express";
-import { loginUserDto } from "src/dto/loginUser.dto";
+import { LoginUserDto } from "src/dto/loginUser.dto";
 
 @Injectable()
 export class BodyRequiredGuard implements CanActivate {
@@ -43,7 +43,7 @@ export class BodyRequiredGuard implements CanActivate {
     const routePath = getRoutePath(req);
 
     // Type guards for DTOs
-    const isLoginDto = (v: unknown): v is loginUserDto =>
+    const isLoginDto = (v: unknown): v is LoginUserDto =>
       typeof v === "object" &&
       v !== null &&
       "username" in v &&
