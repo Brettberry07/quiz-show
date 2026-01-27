@@ -9,7 +9,6 @@ import { CachedQuiz } from '../game/game.types';
 import { QuizEntity } from '../entities/quiz.entity';
 import { QuestionEntity } from '../entities/question.entity';
 import { PaginatedResponse } from './dto/pagination.dto';
-import { QueryRunner } from 'typeorm';
 
 @Injectable()
 export class QuizService {
