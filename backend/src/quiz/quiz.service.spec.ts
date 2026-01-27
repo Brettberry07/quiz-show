@@ -58,6 +58,8 @@ describe('QuizService', () => {
           useValue: {
             findOne: jest.fn(),
             find: jest.fn(),
+            findAndCount: jest.fn(),
+            createQueryBuilder: jest.fn(),
             create: jest.fn(),
             save: jest.fn(),
             delete: jest.fn(),
@@ -89,6 +91,176 @@ describe('QuizService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('findAll with pagination', () => {
+    it('should return paginated results with correct metadata', async () => {
+      const mockQuizzes = [
+        { ...mockQuizEntity, id: 'quiz-1', title: 'Quiz 1', questionCount: 5 },
+        { ...mockQuizEntity, id: 'quiz-2', title: 'Quiz 2', questionCount: 3 },
+        { ...mockQuizEntity, id: 'quiz-3', title: 'Quiz 3', questionCount: 10 },
+      ];
+
+      const mockQueryBuilder = {
+        loadRelationCountAndMap: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([mockQuizzes, 3]),
+      };
+
+      jest.spyOn(quizRepository, 'createQueryBuilder').mockReturnValue(mockQueryBuilder as any);
+
+      const result = await service.findAll(1, 10);
+
+      expect(result.data.length).toBe(3);
+      expect(result.data[0].questionCount).toBe(5);
+      expect(result.data[1].questionCount).toBe(3);
+      expect(result.meta).toEqual({
+        total: 3,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
+      expect(mockQueryBuilder.loadRelationCountAndMap).toHaveBeenCalledWith('quiz.questionCount', 'quiz.questions');
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('quiz.createdAt', 'DESC');
+      expect(mockQueryBuilder.skip).toHaveBeenCalledWith(0);
+      expect(mockQueryBuilder.take).toHaveBeenCalledWith(10);
+    });
+
+    it('should calculate pagination metadata correctly for multiple pages', async () => {
+      const mockQuizzes = Array.from({ length: 10 }, (_, i) => ({
+        ...mockQuizEntity,
+        id: `quiz-${i + 1}`,
+        title: `Quiz ${i + 1}`,
+        questionCount: i + 1,
+      }));
+
+      const mockQueryBuilder = {
+        loadRelationCountAndMap: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([mockQuizzes, 25]),
+      };
+
+      jest.spyOn(quizRepository, 'createQueryBuilder').mockReturnValue(mockQueryBuilder as any);
+
+      const result = await service.findAll(2, 10);
+
+      expect(result.data.length).toBe(10);
+      expect(result.meta).toEqual({
+        total: 25,
+        page: 2,
+        limit: 10,
+        totalPages: 3,
+        hasNextPage: true,
+        hasPreviousPage: true,
+      });
+      expect(mockQueryBuilder.skip).toHaveBeenCalledWith(10);
+      expect(mockQueryBuilder.take).toHaveBeenCalledWith(10);
+    });
+
+    it('should handle last page with partial results', async () => {
+      const mockQuizzes = Array.from({ length: 3 }, (_, i) => ({
+        ...mockQuizEntity,
+        id: `quiz-${i + 21}`,
+        title: `Quiz ${i + 21}`,
+        questionCount: 5,
+      }));
+
+      const mockQueryBuilder = {
+        loadRelationCountAndMap: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([mockQuizzes, 23]),
+      };
+
+      jest.spyOn(quizRepository, 'createQueryBuilder').mockReturnValue(mockQueryBuilder as any);
+
+      const result = await service.findAll(3, 10);
+
+      expect(result.data.length).toBe(3);
+      expect(result.meta).toEqual({
+        total: 23,
+        page: 3,
+        limit: 10,
+        totalPages: 3,
+        hasNextPage: false,
+        hasPreviousPage: true,
+      });
+    });
+
+    it('should return empty results for page beyond total', async () => {
+      const mockQueryBuilder = {
+        loadRelationCountAndMap: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[], 5]),
+      };
+
+      jest.spyOn(quizRepository, 'createQueryBuilder').mockReturnValue(mockQueryBuilder as any);
+
+      const result = await service.findAll(10, 10);
+
+      expect(result.data.length).toBe(0);
+      expect(result.meta).toEqual({
+        total: 5,
+        page: 10,
+        limit: 10,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: true,
+      });
+    });
+
+    it('should use default values when not provided', async () => {
+      const mockQueryBuilder = {
+        loadRelationCountAndMap: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+      };
+
+      jest.spyOn(quizRepository, 'createQueryBuilder').mockReturnValue(mockQueryBuilder as any);
+
+      const result = await service.findAll();
+
+      expect(mockQueryBuilder.skip).toHaveBeenCalledWith(0);
+      expect(mockQueryBuilder.take).toHaveBeenCalledWith(10);
+      expect(result.meta.page).toBe(1);
+      expect(result.meta.limit).toBe(10);
+    });
+
+    it('should not load question entities, only count them', async () => {
+      const mockQuizzes = [
+        { ...mockQuizEntity, id: 'quiz-1', questions: undefined, questionCount: 100 },
+      ];
+
+      const mockQueryBuilder = {
+        loadRelationCountAndMap: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([mockQuizzes, 1]),
+      };
+
+      jest.spyOn(quizRepository, 'createQueryBuilder').mockReturnValue(mockQueryBuilder as any);
+
+      const result = await service.findAll(1, 10);
+
+      // Verify we used loadRelationCountAndMap instead of loading relations
+      expect(mockQueryBuilder.loadRelationCountAndMap).toHaveBeenCalledWith('quiz.questionCount', 'quiz.questions');
+      
+      // Verify the result has questionCount but questions were never loaded
+      expect(result.data[0].questionCount).toBe(100);
+      expect(mockQuizzes[0].questions).toBeUndefined();
+    });
   });
 
   describe('addQuestion (optimized)', () => {

@@ -37,33 +37,7 @@ async addQuestion(quizId: string, ...): Promise<Question> {
 
 ---
 
-### 3. Add Pagination to `findAll()`
-
-**File:** `src/quiz/quiz.service.ts` (Lines 93-101)
-
-**Issue:** Returns all quizzes without pagination, which will cause performance issues as the database grows.
-
-**Solution:**
-
-```typescript
-async findAll(page = 1, limit = 20): Promise<PaginatedResponse<Quiz>> {
-  const [quizzes, total] = await this.quizRepository.findAndCount({
-    relations: ['questions'],
-    skip: (page - 1) * limit,
-    take: limit,
-  });
-  return {
-    data: quizzes.map(q => this.toDomainQuiz(q).getSummary()),
-    total,
-    page,
-    limit,
-  };
-}
-```
-
-Update controller to accept query parameters for pagination.
-
----
+### 3. Add Pagination to `findAll()` ✅ COMPLETED
 
 ### 4. Remove Circular Dependency with GameModule
 
