@@ -8,29 +8,6 @@ This document outlines improvements and refactoring opportunities identified in 
 
 ### 1. Fix N+1 Query Problem in `saveQuiz()` ✅ COMPLETED
 
-**File:** `src/quiz/quiz.service.ts` (Lines 390-425)
-
-**Issue:** The `saveQuiz()` method loaded the entire quiz with relations, then recreated all question entities, causing unnecessary database operations.
-
-**Status:** RESOLVED - January 27, 2026
-
-**Implementation:**
-- Removed the inefficient `saveQuiz()` method entirely
-- Implemented transaction-based updates in `update()`, `addQuestion()`, and `addQuestionForGamePlayer()`
-- Created `updateQuestionsOptimized()` that updates only changed questions directly via the question repository
-- For quiz-only updates (e.g., title), only the quiz entity is updated
-- For question updates, individual questions are updated directly without recreating all entities
-- All multi-step operations now use TypeORM transactions for data consistency
-
-**Benefits:**
-- Eliminates N+1 query problem
-- Reduces database load significantly for question updates
-- Improves performance for large quizzes
-- Ensures data consistency with transactions
-- Only updates what actually changed
-
----
-
 ### 2. Add Transaction Support for Multi-Step Operations
 
 **Files:** `src/quiz/quiz.service.ts`
