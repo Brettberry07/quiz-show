@@ -206,42 +206,95 @@ export class QuizService {
       throw new ForbiddenException('You can only update your own quizzes');
     }
 
-    // Update title if provided
-    if (updateQuizDto.title) {
-      quiz.updateTitle(updateQuizDto.title);
-    }
+    const queryRunner = this.quizRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    // Update questions if provided
-    if (updateQuizDto.questions) {
-      this.updateQuestions(quiz, updateQuizDto.questions);
-    }
+    try {
+      // Update title if provided
+      if (updateQuizDto.title) {
+        quiz.updateTitle(updateQuizDto.title);
+        await queryRunner.manager.update(QuizEntity, { id: quiz.id }, { 
+          title: quiz.title, 
+          updatedAt: new Date() 
+        });
+      }
 
-    await this.saveQuiz(quiz);
-    return quiz;
+      // Update questions if provided
+      if (updateQuizDto.questions) {
+        await this.updateQuestions(quiz, updateQuizDto.questions, queryRunner);
+      }
+
+      await queryRunner.commitTransaction();
+      
+      // Refresh the quiz from database to get updated state
+      return await this.findOne(id);
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   /**
    * Helper to update questions in a quiz
+   * Updates only changed questions directly in the database
    */
-  private updateQuestions(quiz: Quiz, questionDtos: UpdateQuestionDto[]): void {
+  private async updateQuestions(quiz: Quiz, questionDtos: UpdateQuestionDto[], queryRunner: any): Promise<void> {
     for (const qDto of questionDtos) {
       if (qDto.id) {
-        // Update existing question
+        // Validate question exists in quiz
         const question = quiz.getQuestion(qDto.id);
         if (!question) {
           throw new NotFoundException(`Question with id "${qDto.id}" not found in quiz "${quiz.id}".`);
         }
-        if (qDto.text !== undefined) question.text = qDto.text;
-        if (qDto.category !== undefined) question.category = qDto.category;
-        if (qDto.author !== undefined) question.author = qDto.author;
-        if (qDto.type !== undefined) question.type = qDto.type;
-        if (qDto.timeLimitSeconds !== undefined) question.timeLimitSeconds = qDto.timeLimitSeconds;
-        if (qDto.pointsMultiplier !== undefined) question.pointsMultiplier = qDto.pointsMultiplier;
-        if (qDto.options !== undefined) question.options = qDto.options;
-        if (qDto.correctOptionIndex !== undefined) question.correctOptionIndex = qDto.correctOptionIndex;
+
+        // Build update object with only defined fields
+        const updates: Partial<QuestionEntity> = {};
+        if (qDto.text !== undefined) {
+          question.text = qDto.text;
+          updates.text = qDto.text;
+        }
+        if (qDto.category !== undefined) {
+          question.category = qDto.category;
+          updates.category = qDto.category;
+        }
+        if (qDto.author !== undefined) {
+          question.author = qDto.author;
+          updates.author = qDto.author;
+        }
+        if (qDto.type !== undefined) {
+          question.type = qDto.type;
+          updates.type = qDto.type;
+        }
+        if (qDto.timeLimitSeconds !== undefined) {
+          question.timeLimitSeconds = qDto.timeLimitSeconds;
+          updates.timeLimitSeconds = qDto.timeLimitSeconds;
+        }
+        if (qDto.pointsMultiplier !== undefined) {
+          question.pointsMultiplier = qDto.pointsMultiplier;
+          updates.pointsMultiplier = qDto.pointsMultiplier;
+        }
+        if (qDto.options !== undefined) {
+          question.options = qDto.options;
+          updates.options = qDto.options;
+        }
+        if (qDto.correctOptionIndex !== undefined) {
+          question.correctOptionIndex = qDto.correctOptionIndex;
+          updates.correctOptionIndex = qDto.correctOptionIndex;
+        }
+
+        // Only update if there are changes
+        if (Object.keys(updates).length > 0) {
+          await queryRunner.manager.update(QuestionEntity, { id: qDto.id }, updates);
+        }
       }
     }
+    
+    // Update quiz timestamp
     quiz.updatedAt = new Date();
+    await queryRunner.manager.update(QuizEntity, { id: quiz.id }, { updatedAt: quiz.updatedAt });
   }
 
   /**
@@ -259,21 +312,53 @@ export class QuizService {
       throw new ForbiddenException('You can only add questions to your own quizzes');
     }
 
-    const question = new Question(
-      randomUUID(),
-      quizId,
-      addQuestionDto.text,
-      addQuestionDto.category,
-      addQuestionDto.author || requesterName,
-      addQuestionDto.type,
-      addQuestionDto.timeLimitSeconds,
-      addQuestionDto.pointsMultiplier,
-      addQuestionDto.options,
-      addQuestionDto.correctOptionIndex
-    );
-    quiz.addQuestion(question);
-    await this.saveQuiz(quiz);
-    return question;
+    const queryRunner = this.quizRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const question = new Question(
+        randomUUID(),
+        quizId,
+        addQuestionDto.text,
+        addQuestionDto.category,
+        addQuestionDto.author || requesterName,
+        addQuestionDto.type,
+        addQuestionDto.timeLimitSeconds,
+        addQuestionDto.pointsMultiplier,
+        addQuestionDto.options,
+        addQuestionDto.correctOptionIndex
+      );
+
+      // Create question entity and save directly
+      const questionEntity = queryRunner.manager.create(QuestionEntity, {
+        id: question.id,
+        text: question.text,
+        category: question.category,
+        author: question.author,
+        type: question.type,
+        timeLimitSeconds: question.timeLimitSeconds,
+        pointsMultiplier: question.pointsMultiplier,
+        options: question.options,
+        correctOptionIndex: question.correctOptionIndex,
+        quiz: { id: quizId } as QuizEntity,
+      });
+      
+      await queryRunner.manager.save(QuestionEntity, questionEntity);
+      
+      // Update quiz timestamp
+      await queryRunner.manager.update(QuizEntity, { id: quizId }, { updatedAt: new Date() });
+
+      await queryRunner.commitTransaction();
+      
+      quiz.addQuestion(question);
+      return question;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   /**
@@ -288,24 +373,55 @@ export class QuizService {
   async addQuestionForGamePlayer(quizId: string, addQuestionDto: CreateQuestionDto, contributorId: string, contributorName?: string): Promise<Question> {
     const quiz = await this.findOne(quizId);
     
-    const question = new Question(
-      randomUUID(),
-      quizId,
-      addQuestionDto.text,
-      addQuestionDto.category,
-      addQuestionDto.author || contributorName,
-      addQuestionDto.type,
-      addQuestionDto.timeLimitSeconds,
-      addQuestionDto.pointsMultiplier,
-      addQuestionDto.options,
-      addQuestionDto.correctOptionIndex
-    );
-    quiz.addQuestion(question);
-    await this.saveQuiz(quiz);
-    
-    this.logger.log(`Player ${contributorId} contributed a question to quiz ${quizId}`);
-    
-    return question;
+    const queryRunner = this.quizRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const question = new Question(
+        randomUUID(),
+        quizId,
+        addQuestionDto.text,
+        addQuestionDto.category,
+        addQuestionDto.author || contributorName,
+        addQuestionDto.type,
+        addQuestionDto.timeLimitSeconds,
+        addQuestionDto.pointsMultiplier,
+        addQuestionDto.options,
+        addQuestionDto.correctOptionIndex
+      );
+
+      // Create question entity and save directly
+      const questionEntity = queryRunner.manager.create(QuestionEntity, {
+        id: question.id,
+        text: question.text,
+        category: question.category,
+        author: question.author,
+        type: question.type,
+        timeLimitSeconds: question.timeLimitSeconds,
+        pointsMultiplier: question.pointsMultiplier,
+        options: question.options,
+        correctOptionIndex: question.correctOptionIndex,
+        quiz: { id: quizId } as QuizEntity,
+      });
+      
+      await queryRunner.manager.save(QuestionEntity, questionEntity);
+      
+      // Update quiz timestamp
+      await queryRunner.manager.update(QuizEntity, { id: quizId }, { updatedAt: new Date() });
+
+      await queryRunner.commitTransaction();
+      
+      quiz.addQuestion(question);
+      this.logger.log(`Player ${contributorId} contributed a question to quiz ${quizId}`);
+      
+      return question;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   /**
@@ -391,34 +507,4 @@ export class QuizService {
     };
   }
 
-  private async saveQuiz(quiz: Quiz): Promise<void> {
-    const quizEntity = await this.quizRepository.findOne({ 
-      where: { id: quiz.id },
-      relations: ['questions'],
-    });
-    if (!quizEntity) {
-      throw new NotFoundException(`Quiz with ID ${quiz.id} not found`);
-    }
-
-    quizEntity.title = quiz.title;
-    quizEntity.hostId = quiz.hostId;
-    quizEntity.updatedAt = new Date();
-    quizEntity.questions = quiz.questions.map((question) => {
-      const entity = this.questionRepository.create({
-        id: question.id,
-        text: question.text,
-        category: question.category,
-        author: question.author,
-        type: question.type,
-        timeLimitSeconds: question.timeLimitSeconds,
-        pointsMultiplier: question.pointsMultiplier,
-        options: question.options,
-        correctOptionIndex: question.correctOptionIndex,
-        quiz: quizEntity,
-      });
-      return entity;
-    });
-
-    await this.quizRepository.save(quizEntity);
-  }
 }
