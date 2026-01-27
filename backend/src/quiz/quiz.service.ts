@@ -94,6 +94,8 @@ export class QuizService {
   /**
    * Get all quizzes (returns summaries for list view) with pagination
    * 
+   * Optimized to avoid loading all question entities - uses relation count instead
+   * 
    * @param page - The page number (default: 1)
    * @param limit - The number of items per page (default: 10)
    * @returns Paginated quiz summaries with metadata
@@ -104,18 +106,29 @@ export class QuizService {
   ): Promise<PaginatedResponse<ReturnType<Quiz['getSummary']>>> {
     const skip = (page - 1) * limit;
 
-    const [quizzes, total] = await this.quizRepository.findAndCount({
-      relations: ['questions'],
-      skip,
-      take: limit,
-      order: {
-        createdAt: 'DESC',
-      },
-    });
+    // Use query builder to load only quiz metadata + question count
+    // This avoids loading all question entities which can be expensive
+    const queryBuilder = this.quizRepository
+      .createQueryBuilder('quiz')
+      .loadRelationCountAndMap('quiz.questionCount', 'quiz.questions')
+      .orderBy('quiz.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit);
 
-    const data = quizzes.map((quiz) =>
-      this.toDomainQuiz(quiz).getSummary()
-    );
+    const [quizzes, total] = await queryBuilder.getManyAndCount();
+
+    // Map to summaries without loading full question entities
+    // TypeORM adds questionCount dynamically via loadRelationCountAndMap
+    type QuizWithCount = QuizEntity & { questionCount?: number };
+    
+    const data = quizzes.map((quiz: QuizWithCount) => ({
+      id: quiz.id,
+      title: quiz.title,
+      hostId: quiz.hostId,
+      questionCount: quiz.questionCount ?? 0,
+      createdAt: quiz.createdAt,
+      updatedAt: quiz.updatedAt,
+    }));
 
     const totalPages = Math.ceil(total / limit);
 
