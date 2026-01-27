@@ -8,6 +8,8 @@ import { Quiz, Question } from './quiz.class';
 import { CachedQuiz } from '../game/game.types';
 import { QuizEntity } from '../entities/quiz.entity';
 import { QuestionEntity } from '../entities/question.entity';
+import { PaginatedResponse } from './dto/pagination.dto';
+import { QueryRunner } from 'typeorm';
 
 @Injectable()
 export class QuizService {
@@ -91,17 +93,44 @@ export class QuizService {
   }
 
   /**
-   * Get all quizzes (returns summaries for list view)
+   * Get all quizzes (returns summaries for list view) with pagination
    * 
-   * @returns Array of quiz summaries
+   * @param page - The page number (default: 1)
+   * @param limit - The number of items per page (default: 10)
+   * @returns Paginated quiz summaries with metadata
    */
-  async findAll(): Promise<ReturnType<Quiz['getSummary']>[]> {
-    const quizzes = await this.quizRepository.find({
+  async findAll(
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<PaginatedResponse<ReturnType<Quiz['getSummary']>>> {
+    const skip = (page - 1) * limit;
+
+    const [quizzes, total] = await this.quizRepository.findAndCount({
       relations: ['questions'],
+      skip,
+      take: limit,
+      order: {
+        createdAt: 'DESC',
+      },
     });
-    return quizzes.map((quiz) =>
+
+    const data = quizzes.map((quiz) =>
       this.toDomainQuiz(quiz).getSummary()
     );
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   /**

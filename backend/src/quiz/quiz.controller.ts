@@ -10,12 +10,14 @@ import {
     Request,
     HttpCode,
     HttpStatus,
+    Query,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { QuizService } from './quiz.service';
 import { GameService } from '../game/game.service';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { UpdateQuizDto, AddQuestionDto } from './dto/update-quiz.dto';
+import { PaginationDto } from './dto/pagination.dto';
 
 interface AuthenticatedRequest {
     user: {
@@ -69,16 +71,23 @@ export class QuizController {
     }
 
     /**
-     * Retrieve all quizzes (summaries)
+     * Retrieve all quizzes (summaries) with pagination
      * 
-     * @returns Array of quiz summaries
+     * @param paginationDto - Pagination parameters (page and limit)
+     * @returns Paginated array of quiz summaries
+     * 
+     * @example
+     * GET /quiz?page=1&limit=10
      */
     @Get()
-    async findAll() {
-        const quizzes = await this.quizService.findAll();
+    async findAll(@Query() paginationDto: PaginationDto) {
+        const result = await this.quizService.findAll(
+            paginationDto.page,
+            paginationDto.limit,
+        );
         return {
             message: 'Quizzes retrieved successfully',
-            data: quizzes,
+            ...result,
         };
     }
 

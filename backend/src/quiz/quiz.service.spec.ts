@@ -58,6 +58,7 @@ describe('QuizService', () => {
           useValue: {
             findOne: jest.fn(),
             find: jest.fn(),
+            findAndCount: jest.fn(),
             create: jest.fn(),
             save: jest.fn(),
             delete: jest.fn(),
@@ -89,6 +90,123 @@ describe('QuizService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('findAll with pagination', () => {
+    it('should return paginated results with correct metadata', async () => {
+      const mockQuizzes = [
+        { ...mockQuizEntity, id: 'quiz-1', title: 'Quiz 1' },
+        { ...mockQuizEntity, id: 'quiz-2', title: 'Quiz 2' },
+        { ...mockQuizEntity, id: 'quiz-3', title: 'Quiz 3' },
+      ];
+
+      jest.spyOn(quizRepository, 'findAndCount').mockResolvedValue([mockQuizzes as any, 3]);
+
+      const result = await service.findAll(1, 10);
+
+      expect(result.data.length).toBe(3);
+      expect(result.meta).toEqual({
+        total: 3,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
+      expect(quizRepository.findAndCount).toHaveBeenCalledWith({
+        relations: ['questions'],
+        skip: 0,
+        take: 10,
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+    });
+
+    it('should calculate pagination metadata correctly for multiple pages', async () => {
+      const mockQuizzes = Array.from({ length: 10 }, (_, i) => ({
+        ...mockQuizEntity,
+        id: `quiz-${i + 1}`,
+        title: `Quiz ${i + 1}`,
+      }));
+
+      jest.spyOn(quizRepository, 'findAndCount').mockResolvedValue([mockQuizzes as any, 25]);
+
+      const result = await service.findAll(2, 10);
+
+      expect(result.data.length).toBe(10);
+      expect(result.meta).toEqual({
+        total: 25,
+        page: 2,
+        limit: 10,
+        totalPages: 3,
+        hasNextPage: true,
+        hasPreviousPage: true,
+      });
+      expect(quizRepository.findAndCount).toHaveBeenCalledWith({
+        relations: ['questions'],
+        skip: 10,
+        take: 10,
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+    });
+
+    it('should handle last page with partial results', async () => {
+      const mockQuizzes = Array.from({ length: 3 }, (_, i) => ({
+        ...mockQuizEntity,
+        id: `quiz-${i + 21}`,
+        title: `Quiz ${i + 21}`,
+      }));
+
+      jest.spyOn(quizRepository, 'findAndCount').mockResolvedValue([mockQuizzes as any, 23]);
+
+      const result = await service.findAll(3, 10);
+
+      expect(result.data.length).toBe(3);
+      expect(result.meta).toEqual({
+        total: 23,
+        page: 3,
+        limit: 10,
+        totalPages: 3,
+        hasNextPage: false,
+        hasPreviousPage: true,
+      });
+    });
+
+    it('should return empty results for page beyond total', async () => {
+      jest.spyOn(quizRepository, 'findAndCount').mockResolvedValue([[], 5]);
+
+      const result = await service.findAll(10, 10);
+
+      expect(result.data.length).toBe(0);
+      expect(result.meta).toEqual({
+        total: 5,
+        page: 10,
+        limit: 10,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: true,
+      });
+    });
+
+    it('should use default values when not provided', async () => {
+      jest.spyOn(quizRepository, 'findAndCount').mockResolvedValue([[], 0]);
+
+      const result = await service.findAll();
+
+      expect(quizRepository.findAndCount).toHaveBeenCalledWith({
+        relations: ['questions'],
+        skip: 0,
+        take: 10,
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+      expect(result.meta.page).toBe(1);
+      expect(result.meta.limit).toBe(10);
+    });
   });
 
   describe('addQuestion (optimized)', () => {
