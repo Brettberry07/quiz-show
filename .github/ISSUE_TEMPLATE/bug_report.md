@@ -1,24 +1,31 @@
-Name: Bug report: Short summary
-About: Report the thing that's broken
+---
+name: Bug report
+about: Create a report to help us improve
+title: 'Bug Report: '
+labels: bug
+assignees: ''
 
-## Description
+---
 
-In depth explaination of what is broken
+**Describe the bug**
+A clear and concise description of what the bug is. **REMEMBER TO ADD BACKEND/FRONTEND LABELS**
 
-## Steps to reproduce (MANDATORY)
+**To Reproduce**
+Steps to reproduce the behavior:
+1. Go to '...'
+2. Click on '....'
+3. Scroll down to '....'
+4. See error
 
-1.
-2.
-3.
+**Expected behavior**
+A clear and concise description of what you expected to happen.
 
-## Expected behavior
+**Screenshots**
+If applicable, add screenshots to help explain your problem.
 
-What should happen
+**Device info:**
+ - OS: [e.g. iOS]
+ - Browser [e.g. chrome, safari]
 
-## Actual behavior
-
-What actually happens
-
-## Screenshots or logs
-
-If available
+**Additional context**
+Add any other context about the problem here.
