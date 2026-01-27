@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { QuizController } from './quiz.controller';
 import { QuizService } from './quiz.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { HttpStatus } from '@nestjs/common';
 import { QuestionType } from '../game/game.types';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QuizEntity } from '../entities/quiz.entity';
