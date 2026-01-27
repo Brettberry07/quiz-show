@@ -126,8 +126,8 @@ export class QuizService {
         page,
         limit,
         totalPages,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1,
+        hasNextPage: totalPages > 0 && page < totalPages,
+        hasPreviousPage: totalPages > 0 && page > 1,
       },
     };
   }
