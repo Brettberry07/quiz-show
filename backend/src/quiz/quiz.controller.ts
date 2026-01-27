@@ -21,7 +21,6 @@ interface AuthenticatedRequest {
     user: {
         id: string;
         username: string;
-        role: string;
     };
 }
 
@@ -57,6 +56,7 @@ export class QuizController {
      * }
      */
     @Post()
+    @HttpCode(HttpStatus.CREATED)
     async createQuiz(
         @Body() createQuizDto: CreateQuizDto,
         @Request() req: AuthenticatedRequest,
@@ -64,7 +64,6 @@ export class QuizController {
         const quiz = await this.quizService.createQuiz(createQuizDto, req.user.id, req.user.username);
         return {
             message: 'Quiz created successfully',
-            status: HttpStatus.CREATED,
             data: quiz.getSummary(),
         };
     }
@@ -79,7 +78,6 @@ export class QuizController {
         const quizzes = await this.quizService.findAll();
         return {
             message: 'Quizzes retrieved successfully',
-            status: HttpStatus.OK,
             data: quizzes,
         };
     }
@@ -95,7 +93,6 @@ export class QuizController {
         const quizzes = await this.quizService.findAllByHost(req.user.id);
         return {
             message: 'Your quizzes retrieved successfully',
-            status: HttpStatus.OK,
             data: quizzes,
         };
     }
@@ -109,7 +106,6 @@ export class QuizController {
     async getStats() {
         return {
             message: 'Quiz statistics retrieved',
-            status: HttpStatus.OK,
             data: await this.quizService.getStats(),
         };
     }
@@ -125,7 +121,6 @@ export class QuizController {
         const validation = await this.quizService.validateForGame(id);
         return {
             message: validation.valid ? 'Quiz is valid' : 'Quiz validation failed',
-            status: HttpStatus.OK,
             data: validation,
         };
     }
@@ -146,13 +141,9 @@ export class QuizController {
         const quiz = await this.quizService.findOneForClient(id, req.user.id);
         return {
             message: 'Quiz retrieved successfully',
-            status: HttpStatus.OK,
             data: quiz,
         };
     }
-
-    // Note: getQuizForGame is called internally by GameService
-    // It's not exposed as an HTTP endpoint to prevent clients from accessing correct answers
 
     /**
      * Update a quiz
@@ -171,7 +162,6 @@ export class QuizController {
         const quiz = await this.quizService.update(id, updateQuizDto, req.user.id);
         return {
             message: 'Quiz updated successfully',
-            status: HttpStatus.OK,
             data: quiz.getSummary(),
         };
     }
@@ -185,6 +175,7 @@ export class QuizController {
      * @returns The created question
      */
     @Post(':id/questions')
+    @HttpCode(HttpStatus.CREATED)
     async addQuestion(
         @Param('id') id: string,
         @Body() addQuestionDto: AddQuestionDto,
@@ -193,7 +184,6 @@ export class QuizController {
         const question = await this.quizService.addQuestion(id, addQuestionDto, req.user.id, req.user.username);
         return {
             message: 'Question added successfully',
-            status: HttpStatus.CREATED,
             data: question.getSafeQuestion(),
         };
     }
@@ -208,6 +198,7 @@ export class QuizController {
      * @returns The created question
      */
     @Post('game/:pin/questions')
+    @HttpCode(HttpStatus.CREATED)
     async addQuestionToGame(
         @Param('pin') pin: string,
         @Body() addQuestionDto: AddQuestionDto,
@@ -221,7 +212,6 @@ export class QuizController {
         
         return {
             message: 'Question contributed successfully to the game',
-            status: HttpStatus.CREATED,
             data: question.getSafeQuestion(),
         };
     }
@@ -244,7 +234,6 @@ export class QuizController {
         const removed = await this.quizService.removeQuestion(id, questionId, req.user.id);
         return {
             message: removed ? 'Question removed successfully' : 'Question not found',
-            status: HttpStatus.OK,
             data: { removed },
         };
     }
@@ -265,7 +254,6 @@ export class QuizController {
         const quiz = await this.quizService.remove(id, req.user.id);
         return {
             message: 'Quiz deleted successfully',
-            status: HttpStatus.OK,
             data: quiz.getSummary(),
         };
     }

@@ -36,7 +36,7 @@ The application will be structured into the following NestJS modules:
 | :--- | :--- |
 | **`AppModule`** | Root module, config (env vars), and database connection bootstrapper. |
 | **`AuthModule`** | Handles Host login via username (issues JWT) and ephemeral Player "login" (Nickname assignment). |
-| **`QuizModule`** | **REST Controllers** for creating, editing, and listing Quizzes. Interacts with SQLite. |
+| **`QuizModule`** | **REST Controllers** for creating, editing, and listing Quizzes. Interacts with SQLite. Uses optimized transaction-based updates to avoid N+1 queries. |
 | **`GameModule`** | The core engine. Contains the `GameManager` service which holds active games in memory. |
 | **`WebSocketModule`** | Contains the `GameGateway`. Handles socket connections, room management, and DTO validation. |
 | **`ScoringModule`** | Pure logic service. Calculates points based on time deltas and streaks. |
