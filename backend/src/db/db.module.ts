@@ -9,7 +9,7 @@ import { DbService } from "./db.service";
   imports: [
     TypeOrmModule.forRoot({
       type: 'sqlite',
-      database: '../database.db',
+      database: process.env.DATABASE_PATH || './data/database.db',
       entities: [User, QuizEntity, QuestionEntity],
       synchronize: true,
     }),

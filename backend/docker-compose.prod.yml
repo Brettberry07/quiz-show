@@ -1,0 +1,39 @@
+version: '3.8'
+
+# Production Docker Compose Configuration
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  backend:
+    container_name: quizshow-backend-prod
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    environment:
+      - NODE_ENV=production
+      - PORT=5200
+      - DATABASE_PATH=/app/data/database.db
+    volumes:
+      - ./data:/app/data:rw
+    user: "1001:1001"
+    # Production restart policy
+    restart: always
+    # Remove interactive terminal
+    stdin_open: false
+    tty: false
+    # Use production command from Dockerfile
+    command: dumb-init node dist/main
+    # Add health check monitoring
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5200', (r) => {process.exit(r.statusCode === 404 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      start_period: 40s
+      retries: 3
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        reservations:
+          cpus: '0.5'
+          memory: 256M
