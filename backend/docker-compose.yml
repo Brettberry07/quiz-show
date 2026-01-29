@@ -32,7 +32,3 @@ networks:
   quizshow-network:
     driver: bridge
     name: quizshow-network
-
-volumes:
-  data:
-    name: quizshow-data
