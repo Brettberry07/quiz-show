@@ -9,21 +9,15 @@ services:
       target: development
     ports:
       - "5200:5200"
+    env_file:
+      - ./src/.env
     environment:
       - NODE_ENV=development
       - PORT=5200
       - DATABASE_PATH=/app/data/database.db
-      # JWT Configuration (override with .env file)
-      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_key_change_in_production}
-      - JWT_ACCESS_EXP=${JWT_ACCESS_EXP:-30m}
-      - JWT_REFRESH_EXP=${JWT_REFRESH_EXP:-7d}
-    env_file:
-      - ./src/.env
     volumes:
       # Mount source code for hot reload in development
       - ./src:/app/src
-      - ./test:/app/test
-      # Persist SQLite database
       - ./data:/app/data
       # Prevent node_modules from being overwritten
       - /app/node_modules

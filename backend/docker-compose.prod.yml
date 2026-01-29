@@ -15,7 +15,7 @@ services:
       - PORT=5200
       - DATABASE_PATH=/app/data/database.db
     volumes:
-      - ./data:/app/data:rw
+      - ./data:/app/data
     user: "1001:1001"
     # Production restart policy
     restart: always
@@ -31,9 +31,3 @@ services:
       timeout: 3s
       start_period: 40s
       retries: 3
-    # Resource limits (adjust based on your needs)
-    deploy:
-      resources:
-        reservations:
-          cpus: '0.5'
-          memory: 256M

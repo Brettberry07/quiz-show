@@ -5,7 +5,6 @@ import { JwtModule } from "./jwt/jwt.module";
 import { DbModule } from "./db/db.module";
 import { GameModule } from "./game/game.module";
 import { ConfigModule } from "@nestjs/config";
-// import { WebsocketModule } from './websocket/websocket.module';
 import { QuizModule } from "./quiz/quiz.module";
 
 /** DO NOT DELETE
