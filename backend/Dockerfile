@@ -19,8 +19,6 @@ COPY package*.json ./
 # ============================================
 FROM base AS development
 
-RUN npm i
-
 # Install all dependencies (including devDependencies)
 RUN npm ci
 
@@ -37,8 +35,6 @@ CMD ["dumb-init", "npm", "run", "start:dev"]
 # Builder Stage - Compile TypeScript
 # ============================================
 FROM base AS builder
-
-RUN npm i
 
 # Install all dependencies (needed for build)
 RUN npm ci
