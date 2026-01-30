@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { motion, AnimatePresence } from "framer-motion";
 import { Waves, Hand, Plus, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { QuestionBuilder, Question } from "@/components/QuestionBuilder";
 import { Button } from "@/components/ui/Button";
@@ -49,7 +49,15 @@ const ANSWER_ICONS = [
   <svg key="svg" className="w-16 h-16 md:w-24 md:h-24 fill-current" viewBox="0 0 64 64" fill="currentColor"><path d="M50 16h-8v-4a6 6 0 00-12 0v4H18a6 6 0 00-6 6v4a6 6 0 006 6h2v18a6 6 0 006 6h12a6 6 0 006-6V32h2a6 6 0 006-6v-4a6 6 0 00-6-6zm-20-4a2 2 0 114 0v4h-4v-4zm18 14a2 2 0 01-2 2h-4v20a2 2 0 01-2 2H28a2 2 0 01-2-2V28h-4a2 2 0 01-2-2v-4a2 2 0 012-2h24a2 2 0 012 2v4z" /></svg>
 ];
 
-export default function PlayPage() {
+export default function PlayPageWrapper() {
+  return (
+    <Suspense>
+      <PlayPage />
+    </Suspense>
+  );
+}
+
+function PlayPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { username, fetchWithAuth } = useUser();
@@ -121,19 +129,19 @@ export default function PlayPage() {
       router.push(`/play/leaderboard?pin=${pin}&q=${nextIndex}&total=${totalQuestions}&playerId=${playerId}`);
     };
 
-    onEvent("question_active", handleQuestion);
-    onEvent("question_ended", handleEnded);
-    onEvent("leaderboard", handleLeaderboard);
-    onEvent("game_ended", handleLeaderboard);
+    onEvent("question_active", handleQuestion as any);
+    onEvent("question_ended", handleEnded as any);
+    onEvent("leaderboard", handleLeaderboard as any);
+    onEvent("game_ended", handleLeaderboard as any);
 
     void sync();
 
     return () => {
       mounted = false;
-      offEvent("question_active", handleQuestion);
-      offEvent("question_ended", handleEnded);
-      offEvent("leaderboard", handleLeaderboard);
-      offEvent("game_ended", handleLeaderboard);
+      offEvent("question_active", handleQuestion as any);
+      offEvent("question_ended", handleEnded as any);
+      offEvent("leaderboard", handleLeaderboard as any);
+      offEvent("game_ended", handleLeaderboard as any);
     };
   }, [pin, username, emitWithAck, connectSocket, onEvent, offEvent, router, currentQuestionIndex, totalQuestions, playerId]);
 

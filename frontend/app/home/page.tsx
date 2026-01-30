@@ -50,7 +50,7 @@ export default function HomePage() {
                   </button>
                   <div className="space-y-2 z-10">
                     <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-2">
-                      <span className="text-2xl">{quiz.emoji || "📚"}</span>
+                      <span className="text-2xl">{"📚"}</span>
                     </div>
                     <h3 className="text-2xl font-black text-[#333] leading-tight">{quiz.title}</h3>
                     <p className="text-[#555] font-bold">{quiz.questionCount} Question{quiz.questionCount !== 1 ? 's' : ''}</p>

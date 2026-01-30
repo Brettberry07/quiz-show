@@ -7,10 +7,18 @@ import { Card } from "@/components/ui/Card";
 import { Check, User, ArrowLeft, Home } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useUser } from "@/context/UserContext";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Quiz } from "@/context/QuizContext";
 
-export default function ReviewQuestionsPage() {
+export default function ReviewQuestionsPageWrapper() {
+  return (
+    <Suspense>
+      <ReviewQuestionsPage />
+    </Suspense>
+  );
+}
+
+function ReviewQuestionsPage() {
   const searchParams = useSearchParams();
   const pin = searchParams.get("pin") || "";
   const { fetchWithAuth } = useUser();

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useGame } from "@/context/GameContext";
 import { ArrowRight, Trophy, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useUser } from "@/context/UserContext";
 
 interface LeaderboardEntry {
@@ -16,7 +16,15 @@ interface LeaderboardEntry {
   rank: number;
 }
 
-export default function LeaderboardPage() {
+export default function LeaderboardPageWrapper() {
+  return (
+    <Suspense>
+      <LeaderboardPage />
+    </Suspense>
+  );
+}
+
+function LeaderboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pin = searchParams.get("pin") || "";
@@ -62,7 +70,7 @@ export default function LeaderboardPage() {
       router.push(`/host/winner?pin=${pin}`);
     };
 
-    onEvent("leaderboard", handleLeaderboard);
+    onEvent("leaderboard", handleLeaderboard as any);
     onEvent("question_active", handleQuestion);
     onEvent("game_ended", handleEnded);
 
@@ -70,7 +78,7 @@ export default function LeaderboardPage() {
 
     return () => {
       mounted = false;
-      offEvent("leaderboard", handleLeaderboard);
+      offEvent("leaderboard", handleLeaderboard as any);
       offEvent("question_active", handleQuestion);
       offEvent("game_ended", handleEnded);
     };

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { User, Waves, Hand } from "lucide-react";
 import Link from 'next/link';
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useGame } from "@/context/GameContext";
 
 const ANSWER_ICONS = [
@@ -14,7 +14,15 @@ const ANSWER_ICONS = [
   <svg key="svg" className="w-12 h-12 fill-current" viewBox="0 0 64 64" fill="currentColor"><path d="M50 16h-8v-4a6 6 0 00-12 0v4H18a6 6 0 00-6 6v4a6 6 0 006 6h2v18a6 6 0 006 6h12a6 6 0 006-6V32h2a6 6 0 006-6v-4a6 6 0 00-6-6zm-20-4a2 2 0 114 0v4h-4v-4zm18 14a2 2 0 01-2 2h-4v20a2 2 0 01-2 2H28a2 2 0 01-2-2V28h-4a2 2 0 01-2-2v-4a2 2 0 012-2h24a2 2 0 012 2v4z" /></svg>
 ];
 
-export default function HostGamePage() {
+export default function HostGamePageWrapper() {
+  return (
+    <Suspense>
+      <HostGamePage />
+    </Suspense>
+  )
+}
+
+function HostGamePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pin = searchParams.get("pin") || "";
@@ -58,10 +66,11 @@ export default function HostGamePage() {
 
   useEffect(() => {
     if (!isQuestionActive || timeRemainingMs === null) {
-      setDeadlineMs(null);
+      if (deadlineMs !== null) setDeadlineMs(null);
       return;
     }
     setDeadlineMs(Date.now() + timeRemainingMs);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isQuestionActive, timeRemainingMs, question?.text]);
 
   useEffect(() => {
@@ -128,7 +137,7 @@ export default function HostGamePage() {
       router.push(`/host/leaderboard?pin=${pin}`);
     };
 
-    onEvent("question_active", handleQuestion);
+    onEvent("question_active", handleQuestion as any);
     onEvent("leaderboard", handleLeaderboard);
     onEvent("question_ended", handleEnded);
     onEvent("player_joined", handlePlayerJoined);
@@ -137,7 +146,7 @@ export default function HostGamePage() {
 
     return () => {
       mounted = false;
-      offEvent("question_active", handleQuestion);
+      offEvent("question_active", handleQuestion as any);
       offEvent("leaderboard", handleLeaderboard);
       offEvent("question_ended", handleEnded);
       offEvent("player_joined", handlePlayerJoined);

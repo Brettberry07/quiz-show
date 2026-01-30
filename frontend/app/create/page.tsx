@@ -5,14 +5,22 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Check, Trash2, Save, Layout, Type, User } from "lucide-react";
 import { QuestionBuilder, Question } from "@/components/QuestionBuilder";
 import { useQuizzes } from "@/context/QuizContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/context/UserContext";
 
-export default function CreatePage() {
+export default function CreatePageWrapper() {
+  return (
+    <Suspense>
+      <CreatePage />
+    </Suspense>
+  );
+}
+
+function CreatePage() {
   const [quizName, setQuizName] = useState("");
   const [description, setDescription] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);

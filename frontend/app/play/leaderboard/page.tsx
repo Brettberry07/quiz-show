@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { TrendingUp, TrendingDown, Minus, Clock } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useUser } from "@/context/UserContext";
 import { useGame } from "@/context/GameContext";
 
@@ -15,7 +15,15 @@ interface LeaderboardEntry {
   rank: number;
 }
 
-export default function PlayerLeaderboardPage() {
+export default function LeaderboardPageWrapper() {
+  return (
+    <Suspense>
+      <PlayerLeaderboardPage />
+    </Suspense>
+  );
+}
+
+function PlayerLeaderboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { username, fetchWithAuth } = useUser();
@@ -59,14 +67,14 @@ export default function PlayerLeaderboardPage() {
     void connectSocket();
     onEvent("question_active", onQuestion);
     onEvent("game_ended", onEnded);
-    onEvent("leaderboard", onLeaderboard);
+    onEvent("leaderboard", onLeaderboard as any);
 
     void sync();
 
     return () => {
       offEvent("question_active", onQuestion);
       offEvent("game_ended", onEnded);
-      offEvent("leaderboard", onLeaderboard);
+      offEvent("leaderboard", onLeaderboard as any);
     };
   }, [pin, router, connectSocket, onEvent, offEvent, emitWithAck]);
 
@@ -99,13 +107,13 @@ export default function PlayerLeaderboardPage() {
     void connectSocket();
     onEvent("question_active", onQuestion);
     onEvent("game_ended", onEnded);
-    onEvent("leaderboard", onLeaderboard);
+    onEvent("leaderboard", onLeaderboard as any);
 
     return () => {
       clearTimeout(timer);
       offEvent("question_active", onQuestion);
       offEvent("game_ended", onEnded);
-      offEvent("leaderboard", onLeaderboard);
+      offEvent("leaderboard", onLeaderboard as any);
     };
   }, [pin, router, connectSocket, onEvent, offEvent]);
 

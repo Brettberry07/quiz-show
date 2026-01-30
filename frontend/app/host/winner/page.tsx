@@ -8,9 +8,17 @@ import { Button } from "@/components/ui/Button";
 import { useUser } from "@/context/UserContext";
 import { useGame } from "@/context/GameContext";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
-export default function WinnerPage() {
+export default function WinnerPageWrapper() {
+    return (
+        <Suspense>
+            <WinnerPage />
+        </Suspense>
+    );
+}
+
+function WinnerPage() {
     const { username, fetchWithAuth } = useUser();
     const { emitWithAck, connectSocket, onEvent, offEvent } = useGame();
     const searchParams = useSearchParams();
@@ -64,14 +72,14 @@ export default function WinnerPage() {
             }
         };
 
-        onEvent("leaderboard", handleLeaderboard);
-        onEvent("game_ended", handleEnded);
+        onEvent("leaderboard", handleLeaderboard as any);
+        onEvent("game_ended", handleEnded as any);
         void sync();
 
         return () => {
             mounted = false;
-            offEvent("leaderboard", handleLeaderboard);
-            offEvent("game_ended", handleEnded);
+            offEvent("leaderboard", handleLeaderboard as any);
+            offEvent("game_ended", handleEnded as any);
         };
     }, [pin, fetchWithAuth, emitWithAck, connectSocket, onEvent, offEvent]);
   // Winner Page Implementation

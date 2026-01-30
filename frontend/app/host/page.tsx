@@ -4,13 +4,21 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, ArrowRight, Music, Settings } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuizzes } from "@/context/QuizContext";
 import { useGame } from "@/context/GameContext";
 
-export default function HostPage() {
+export default function HostPageWrapper() {
+    return (
+        <Suspense>
+            <HostPage />
+        </Suspense>
+    );
+}
+
+function HostPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const quizId = searchParams.get("quizId");
@@ -71,9 +79,9 @@ export default function HostPage() {
             });
         };
 
-        onEvent("player_joined", handleJoin);
+        onEvent("player_joined", handleJoin as any);
         return () => {
-            offEvent("player_joined", handleJoin);
+            offEvent("player_joined", handleJoin as any);
         };
     }, [pin, onEvent, offEvent]);
 
