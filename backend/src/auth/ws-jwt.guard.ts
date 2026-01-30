@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
-import { JwtService, JwtPayload } from '../jwt/jwt.service';
+import { JwtService } from '../jwt/jwt.service';
 
 type AuthedSocket = Socket & { data: { user?: { id: string } } };
 
@@ -19,9 +19,9 @@ export class WsJwtGuard implements CanActivate {
 
     try {
       const payload = await this.jwtService.verifyAndDecode(token);
-      client.data.user = { id: (payload as JwtPayload).sub };
+      client.data.user = { id: (payload).sub };
       return true;
-    } catch (error) {
+    } catch {
       throw new WsException('Unauthorized');
     }
   }
