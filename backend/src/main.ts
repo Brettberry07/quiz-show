@@ -6,10 +6,13 @@ import * as os from 'os';
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
 
-	// Enable CORS for all origins bc screw security
-  // ! In production, CORS would be restricted to frontend and other trusted origins
+	// Enable CORS for quizsink.duckdns.org (production
+	// and localhost:3000 (development)
 	app.enableCors({
-		origin: true, // Allow all origins in development
+		origin: [
+			'https://quizsink.duckdns.org',
+			'http://localhost:3000',
+		],
 		credentials: true, // Allow credentials (cookies, authorization headers)
 		methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
 		allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
