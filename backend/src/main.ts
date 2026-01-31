@@ -9,7 +9,10 @@ async function bootstrap() {
 	// Enable CORS for all origins bc screw security
   // ! In production, CORS would be restricted to frontend and other trusted origins
 	app.enableCors({
-		origin: true, // Allow all origins in development
+		origin: [
+			'https://quizsink.duckdns.org',
+			'http://localhost:3000',
+		],
 		credentials: true, // Allow credentials (cookies, authorization headers)
 		methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
 		allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
