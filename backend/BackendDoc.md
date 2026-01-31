@@ -255,7 +255,6 @@ We cannot trust the client's "Sent At" timestamp (easily spoofed).
 * Player Join via PIN.
 * Single Answer Multiple Choice questions.
 * Standard Scoring (Speed + Correctness).
-* Scoreboard (Top 5).
 * Reconnecting (surviving a page refresh).
 
 ### Excluded (Post-MVP)
@@ -263,5 +262,3 @@ We cannot trust the client's "Sent At" timestamp (easily spoofed).
 * Team Mode.
 * Free text input questions (requires manual grading or fuzzy matching).
 * Rich media (Images/Video in questions).
-* Sound effects (Backend doesn't care, but Frontend asset management is out of scope).
-* Horizontal Scaling (requires Redis Adapter for Socket.io and Redis for Store).
