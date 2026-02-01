@@ -17,7 +17,7 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "https://quizsink.duckdns.org";
 
 const STORAGE_KEYS = {
   username: "quizsink_username",

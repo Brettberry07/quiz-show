@@ -28,12 +28,12 @@ function ReviewQuestionsPage() {
     if (!pin) return;
     let mounted = true;
     const loadQuiz = async () => {
-      const statusResponse = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}`);
+      const statusResponse = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://quizsink.duckdns.org"}/game/${pin}`);
       const statusPayload = await statusResponse.json();
       const quizId = statusPayload?.data?.quizId;
       if (!quizId || !mounted) return;
 
-      const quizResponse = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/quiz/${quizId}`);
+      const quizResponse = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://quizsink.duckdns.org"}/quiz/${quizId}`);
       const quizPayload = await quizResponse.json();
       if (quizResponse.ok && mounted) {
         setCurrentQuiz(quizPayload.data);

@@ -29,7 +29,7 @@ interface QuizContextType {
 
 const QuizContext = createContext<QuizContextType | undefined>(undefined);
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://quizsink.duckdns.org";
 
 export function QuizProvider({ children }: { children: ReactNode }) {
   const { fetchWithAuth, accessToken } = useUser();

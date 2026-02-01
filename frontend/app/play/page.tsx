@@ -191,7 +191,7 @@ function PlayPage() {
 
   const handleQuestionAdded = (q: Question) => {
     if (!pin) return;
-    fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/quiz/game/${pin}/questions`, {
+    fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://quizsink.duckdns.org"}/quiz/game/${pin}/questions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

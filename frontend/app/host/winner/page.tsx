@@ -51,7 +51,7 @@ function WinnerPage() {
             }
 
             // Fallback to REST if no leaderboard yet
-            const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5200"}/game/${pin}/leaderboard?limit=3`).catch(() => null);
+            const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://quizsink.duckdns.org"}/game/${pin}/leaderboard?limit=3`).catch(() => null);
             if (!mounted || !response || !response.ok) return;
             const payload = await response.json();
             const entries = payload?.data?.entries || [];
