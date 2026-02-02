@@ -200,7 +200,7 @@ export function QuestionBuilder({ onAddQuestion, creatorName = "You" }: Question
                               onClick={(e) => e.stopPropagation()}
                               maxLength={ANSWER_OPTION_MAX_LENGTH}
                           />
-                          <span className={`absolute bottom-1 right-2 text-xs font-semibold ${option.length >= ANSWER_OPTION_MAX_LENGTH ? 'text-red-500' : 'text-[#888]'}`}>
+                          <span className={`pointer-events-none absolute bottom-1 right-2 text-xs font-semibold ${option.length >= ANSWER_OPTION_MAX_LENGTH ? 'text-red-500' : 'text-[#888]'}`}>
                             {option.length}/{ANSWER_OPTION_MAX_LENGTH}
                           </span>
                         </div>
