@@ -11,6 +11,7 @@ async function bootstrap() {
 	app.enableCors({
 		origin: [
 			'https://quizsink.duckdns.org',
+			'https://quiz-show-chi.vercel.app',
 			'http://localhost:3000',
 		],
 		credentials: true, // Allow credentials (cookies, authorization headers)
