@@ -4,7 +4,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Check, Plus, UserCircle2 } from "lucide-react";
-import { QUESTION_TEXT_MAX_LENGTH, ANSWER_OPTION_MAX_LENGTH, CATEGORY_MAX_LENGTH } from "@/lib/constants";
+
+const QUESTION_TEXT_MAX_LENGTH = 200;
+const ANSWER_OPTION_MAX_LENGTH = 100;
+const CATEGORY_MAX_LENGTH = 50;
+
 
 export interface Question {
   id: string;
