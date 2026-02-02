@@ -30,7 +30,7 @@ export class CreateQuestionDto {
 
   @IsNumber({}, { message: "Points multiplier must be a number" })
   @Min(0.1, { message: "Points multiplier must be at least 0.1" })
-  @Max(2, { message: "Points multipler must be at most 2"})
+  @Max(2, { message: "Points multiplier must be at most 2"})
   pointsMultiplier: number;
 
   @IsArray({ message: "Options must be an array" })
