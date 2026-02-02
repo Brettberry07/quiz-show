@@ -187,6 +187,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (usernameInput: string) => {
+      usernameInput = usernameInput.toLowerCase();
       if (!usernameInput.trim()) {
         return { ok: false, error: "Username is required" };
       }
