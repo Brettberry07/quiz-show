@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useUser } from "@/context/UserContext";
 
+const USERNAME_MAX_LENGTH = 20;
+
 export default function LoginPage() {
   const router = useRouter();
   const [usernameInput, setUsernameInput] = useState("");
@@ -58,13 +60,19 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-4">
           
           <div className="space-y-2">
-            <Input
-            type="text"
-            placeholder="Username"
-            value={usernameInput}
-            onChange={(e) => setUsernameInput(e.target.value)}
-            className="h-14 rounded-md border-b-4 border-[#cfcfcf] bg-[#e5e5e5] px-4 text-center text-xl font-bold text-[#555] placeholder:text-[#999] focus-visible:ring-0 focus-visible:border-[#555] transition-all"
-            />
+            <div className="relative">
+              <Input
+                type="text"
+                placeholder="Username"
+                value={usernameInput}
+                onChange={(e) => setUsernameInput(e.target.value.slice(0, USERNAME_MAX_LENGTH))}
+                className="h-14 rounded-md border-b-4 border-[#cfcfcf] bg-[#e5e5e5] px-4 text-center text-xl font-bold text-[#555] placeholder:text-[#999] focus-visible:ring-0 focus-visible:border-[#555] transition-all"
+                maxLength={USERNAME_MAX_LENGTH}
+              />
+              <span className={`absolute bottom-1 right-3 text-xs font-semibold ${usernameInput.length >= USERNAME_MAX_LENGTH ? 'text-red-500' : 'text-[#888]'}`}>
+                {usernameInput.length}/{USERNAME_MAX_LENGTH}
+              </span>
+            </div>
           </div>
 
           {errorMessage && (
