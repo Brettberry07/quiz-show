@@ -100,10 +100,11 @@ export class AuthService {
 	 */
 	async refresh(refreshToken: string): Promise<{ message: string; accessToken: string; newRefreshToken: string; }> {
 		// Verify and decode the refresh token
-		const payload = await this.jwtService.verifyAndDecode(refreshToken);
-		
-		if (!payload?.sub) {
-			throw new UnauthorizedException('Invalid refresh token payload');
+		let payload;
+		try {
+			payload = await this.jwtService.verifyAndDecode(refreshToken);
+		} catch (error) {
+			throw new UnauthorizedException('Invalid refresh token');
 		}
 
 		const user = await this.dbService.findOne(payload.sub);
