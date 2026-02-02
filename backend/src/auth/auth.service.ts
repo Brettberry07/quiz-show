@@ -1,5 +1,4 @@
 import {
-	BadRequestException,
 	Injectable,
 	InternalServerErrorException,
 	UnauthorizedException,
@@ -39,15 +38,11 @@ export class AuthService {
 	async login(loginUserDto: LoginUserDto): Promise<{ message: string; userID: string; accessToken: string; refreshToken: string; }> {
 		const user: User | null = await this.dbService.findOne(undefined, loginUserDto.username);
 
-		if(!user) {
-			return this.register(loginUserDto);
-		}
-
-		// console.log('User found:', user);
-		if(!user.id) return Promise.reject(new BadRequestException('User not found'));
+		if(!user) return this.register(loginUserDto);
+		
 		const tokens = await this.jwtService.rotateTokens(user.id);
-
 		await this.dbService.saveRefreshToken(user, tokens.refreshTokenHash);
+
 		return {
 			message: 'User logged in successfully',
 			userID: user.id,
@@ -73,21 +68,19 @@ export class AuthService {
 	async register(loginUserDto: LoginUserDto): Promise<{ message: string; userID: string; accessToken: string; refreshToken: string; }> {
 		const userPayload: Partial<User> = {
 				username: loginUserDto.username,
-				createdAt: new Date(),
-				refreshTokenHash: '',
-			};
+		};
 
-			const user = await this.dbService.create(userPayload);
-			if (!user || !user.id) return Promise.reject(new InternalServerErrorException('Error creating new user'));
-			const { accessToken, refreshToken, refreshTokenHash } = await this.jwtService.rotateTokens(user.id);
-			await this.dbService.saveRefreshToken(user, refreshTokenHash);
+		const user = await this.dbService.create(userPayload);
+		if (!user || !user.id) return Promise.reject(new InternalServerErrorException('Error creating new user'));
+		const { accessToken, refreshToken, refreshTokenHash } = await this.jwtService.rotateTokens(user.id);
+		await this.dbService.saveRefreshToken(user, refreshTokenHash);
 
-			return {
-				message: 'User registered successfully',
-				userID: user.id,
-				accessToken,
-				refreshToken,
-			};
+		return {
+			message: 'User registered successfully',
+			userID: user.id,
+			accessToken,
+			refreshToken,
+		};
 	}
 
 	/**
@@ -106,29 +99,28 @@ export class AuthService {
 	 * ```
 	 */
 	async refresh(refreshToken: string): Promise<{ message: string; accessToken: string; newRefreshToken: string; }> {
-		// Decode the refresh token to extract user ID
-		const payload = this.jwtService.decodeToken(refreshToken);
-		if (!payload || !payload.sub) {
-			throw new UnauthorizedException('Invalid refresh token');
+		// Verify and decode the refresh token
+		const payload = await this.jwtService.verifyAndDecode(refreshToken);
+		
+		if (!payload?.sub) {
+			throw new UnauthorizedException('Invalid refresh token payload');
 		}
 
-		const userId: string = payload.sub;
-		const user = await this.dbService.findOne(userId);
+		const user = await this.dbService.findOne(payload.sub);
+		
 		if (!user?.id || !user.refreshTokenHash) {
 			throw new UnauthorizedException('User not found or refresh token not set');
 		}
 
-		const isValid = await this.jwtService.compareToken(
-			refreshToken,
-			user.refreshTokenHash,
-		);
-
-		if (!isValid) {
+		// Verify the refresh token matches what we have stored
+		const isValidToken = await this.jwtService.compareToken(refreshToken, user.refreshTokenHash);
+		if (!isValidToken) {
 			throw new UnauthorizedException('Invalid refresh token');
 		}
 
-		const { accessToken, refreshToken: newRefreshToken, refreshTokenHash } = await this.jwtService.rotateTokens(user.id);
-
+		// Generate and save new tokens
+		const { accessToken, refreshToken: newRefreshToken, refreshTokenHash } = 
+			await this.jwtService.rotateTokens(user.id);
 		await this.dbService.saveRefreshToken(user, refreshTokenHash);
 
 		return {
@@ -139,11 +131,6 @@ export class AuthService {
 	}
 
 	async getLoggedIn(accessToken: string): Promise<{ loggedIn: boolean; userId?: string }> {
-		try {
-			return { loggedIn: await this.jwtService.verifyToken(accessToken) };
-		} catch {
-			// Suppress noisy log output during tests but keep for other environments
-			return { loggedIn: false };
-		}
+		return { loggedIn: await this.jwtService.verifyToken(accessToken) };
 	}
 }
