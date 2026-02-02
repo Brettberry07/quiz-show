@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsEnum, IsNumber, Min, IsInt, ArrayMinSize, IsOptional } from "class-validator";
+import { IsString, IsNotEmpty, IsArray, ValidateNested, IsEnum, IsNumber, Min, Max, IsInt, ArrayMinSize, IsOptional, MaxLength, ArrayMaxSize } from "class-validator";
 import { Type } from "class-transformer";
 import { QuestionType } from "../../game/game.types";
 
@@ -8,14 +8,17 @@ import { QuestionType } from "../../game/game.types";
 export class CreateQuestionDto {
   @IsString({ message: "Question text must be a string" })
   @IsNotEmpty({ message: "Question text is required" })
+  @MaxLength(200, { message: `Question text must be at most 200 characters` })
   text: string;
 
   @IsString({ message: "Category must be a string" })
   @IsOptional()
+  @MaxLength(50, { message: `Category must be at most 50 characters` })
   category?: string;
 
   @IsString({ message: "Author must be a string" })
   @IsOptional()
+  @MaxLength(30, { message: `Author must be at most 30 characters` })
   author?: string;
 
   @IsEnum(QuestionType, { message: "Invalid question type" })
@@ -27,11 +30,14 @@ export class CreateQuestionDto {
 
   @IsNumber({}, { message: "Points multiplier must be a number" })
   @Min(0.1, { message: "Points multiplier must be at least 0.1" })
+  @Max(2, { message: "Points multiplier must be at most 2"})
   pointsMultiplier: number;
 
   @IsArray({ message: "Options must be an array" })
   @IsString({ each: true, message: "Each option must be a string" })
   @ArrayMinSize(2, { message: "At least 2 options are required" })
+  @ArrayMaxSize(6, { message: "At most 6 options are allowed" })
+  @MaxLength(100, { each: true, message: `Each option must be at most 100 characters` })
   options: string[];
 
   @IsInt({ message: "Correct option index must be an integer" })
@@ -45,6 +51,7 @@ export class CreateQuestionDto {
 export class CreateQuizDto {
   @IsString({ message: "Title must be a string" })
   @IsNotEmpty({ message: "Title is required" })
+  @MaxLength(30, {message: `Title must be at most 30 characters`})
   title: string;
 
   @IsArray({ message: "Questions must be an array" })

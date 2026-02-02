@@ -5,6 +5,11 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Check, Plus, UserCircle2 } from "lucide-react";
 
+const QUESTION_TEXT_MAX_LENGTH = 200;
+const ANSWER_OPTION_MAX_LENGTH = 100;
+const CATEGORY_MAX_LENGTH = 50;
+
+
 export interface Question {
   id: string;
   text: string;
@@ -32,7 +37,7 @@ export function QuestionBuilder({ onAddQuestion, creatorName = "You" }: Question
 
   const handleOptionChange = (index: number, value: string) => {
     const newOptions = [...options];
-    newOptions[index] = value;
+    newOptions[index] = value.slice(0, ANSWER_OPTION_MAX_LENGTH);
     setOptions(newOptions);
   };
 
@@ -108,19 +113,31 @@ export function QuestionBuilder({ onAddQuestion, creatorName = "You" }: Question
          </div>
 
          <div className="w-full max-w-3xl space-y-4">
-           <Input
-             value={currentQuestion}
-             onChange={(e) => setCurrentQuestion(e.target.value)}
-             placeholder="Start typing your question here..."
-             className="bg-[#e5e5e5] border-2 border-[#cfcfcf] shadow-inner text-center text-xl md:text-2xl font-bold h-20 rounded-xl focus:ring-4 focus:ring-[#A59A9A]/30 focus:border-[#3D3030]"
-           />
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+           <div className="relative">
              <Input
-               value={category}
-               onChange={(e) => setCategory(e.target.value)}
-               placeholder="Category (optional)"
-               className="bg-[#f7f7f7] border-2 border-[#cfcfcf] rounded-xl h-12 font-semibold"
+               value={currentQuestion}
+               onChange={(e) => setCurrentQuestion(e.target.value.slice(0, QUESTION_TEXT_MAX_LENGTH))}
+               placeholder="Start typing your question here..."
+               className="bg-[#e5e5e5] border-2 border-[#cfcfcf] shadow-inner text-center text-xl md:text-2xl font-bold h-20 rounded-xl focus:ring-4 focus:ring-[#A59A9A]/30 focus:border-[#3D3030]"
+               maxLength={QUESTION_TEXT_MAX_LENGTH}
              />
+             <span className={`absolute bottom-2 right-3 text-xs font-semibold ${currentQuestion.length >= QUESTION_TEXT_MAX_LENGTH ? 'text-red-500' : 'text-[#888]'}`}>
+               {currentQuestion.length}/{QUESTION_TEXT_MAX_LENGTH}
+             </span>
+           </div>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+             <div className="relative">
+               <Input
+                 value={category}
+                 onChange={(e) => setCategory(e.target.value.slice(0, CATEGORY_MAX_LENGTH))}
+                 placeholder="Category (optional)"
+                 className="bg-[#f7f7f7] border-2 border-[#cfcfcf] rounded-xl h-12 font-semibold"
+                 maxLength={CATEGORY_MAX_LENGTH}
+               />
+               <span className={`absolute bottom-1 right-2 text-xs font-semibold ${category.length >= CATEGORY_MAX_LENGTH ? 'text-red-500' : 'text-[#888]'}`}>
+                 {category.length}/{CATEGORY_MAX_LENGTH}
+               </span>
+             </div>
              <Input
                type="number"
                min={5}
@@ -174,13 +191,19 @@ export function QuestionBuilder({ onAddQuestion, creatorName = "You" }: Question
                                 <Check className="w-5 h-5 stroke-3" />
                             </div>
                         </div>
-                        <Input
-                            value={option}
-                            onChange={(e) => handleOptionChange(index, e.target.value)}
-                            placeholder={`Answer option ${index + 1}`}
-                            className="bg-white/90 border-transparent shadow-sm focus:border-[#A59A9A] font-semibold text-lg py-6"
-                            onClick={(e) => e.stopPropagation()} 
-                        />
+                        <div className="relative">
+                          <Input
+                              value={option}
+                              onChange={(e) => handleOptionChange(index, e.target.value)}
+                              placeholder={`Answer option ${index + 1}`}
+                              className="bg-white/90 border-transparent shadow-sm focus:border-[#A59A9A] font-semibold text-lg py-6"
+                              onClick={(e) => e.stopPropagation()}
+                              maxLength={ANSWER_OPTION_MAX_LENGTH}
+                          />
+                          <span className={`pointer-events-none absolute bottom-1 right-2 text-xs font-semibold ${option.length >= ANSWER_OPTION_MAX_LENGTH ? 'text-red-500' : 'text-[#888]'}`}>
+                            {option.length}/{ANSWER_OPTION_MAX_LENGTH}
+                          </span>
+                        </div>
                     </div>
                  </div>
              ))}
