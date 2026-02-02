@@ -30,6 +30,7 @@ export class CreateQuestionDto {
 
   @IsNumber({}, { message: "Points multiplier must be a number" })
   @Min(0.1, { message: "Points multiplier must be at least 0.1" })
+  @Max(2, { message: "Points multipler must be at most 2"})
   pointsMultiplier: number;
 
   @IsArray({ message: "Options must be an array" })
@@ -50,6 +51,7 @@ export class CreateQuestionDto {
 export class CreateQuizDto {
   @IsString({ message: "Title must be a string" })
   @IsNotEmpty({ message: "Title is required" })
+  @MaxLength(30, {message: `Title must be at most 30 characters`})
   title: string;
 
   @IsArray({ message: "Questions must be an array" })
