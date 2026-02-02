@@ -2,29 +2,23 @@ import { IsString, IsNotEmpty, IsArray, ValidateNested, IsEnum, IsNumber, Min, I
 import { Type } from "class-transformer";
 import { QuestionType } from "../../game/game.types";
 
-// Character limits
-export const QUESTION_TEXT_MAX_LENGTH = 200;
-export const ANSWER_OPTION_MAX_LENGTH = 100;
-export const CATEGORY_MAX_LENGTH = 50;
-export const AUTHOR_MAX_LENGTH = 30;
-
 /**
  * DTO for creating a new question within a quiz
  */
 export class CreateQuestionDto {
   @IsString({ message: "Question text must be a string" })
   @IsNotEmpty({ message: "Question text is required" })
-  @MaxLength(QUESTION_TEXT_MAX_LENGTH, { message: `Question text must be at most ${QUESTION_TEXT_MAX_LENGTH} characters` })
+  @MaxLength(200, { message: `Question text must be at most 200 characters` })
   text: string;
 
   @IsString({ message: "Category must be a string" })
   @IsOptional()
-  @MaxLength(CATEGORY_MAX_LENGTH, { message: `Category must be at most ${CATEGORY_MAX_LENGTH} characters` })
+  @MaxLength(50, { message: `Category must be at most 50 characters` })
   category?: string;
 
   @IsString({ message: "Author must be a string" })
   @IsOptional()
-  @MaxLength(AUTHOR_MAX_LENGTH, { message: `Author must be at most ${AUTHOR_MAX_LENGTH} characters` })
+  @MaxLength(30, { message: `Author must be at most 30 characters` })
   author?: string;
 
   @IsEnum(QuestionType, { message: "Invalid question type" })
@@ -42,7 +36,7 @@ export class CreateQuestionDto {
   @IsString({ each: true, message: "Each option must be a string" })
   @ArrayMinSize(2, { message: "At least 2 options are required" })
   @ArrayMaxSize(6, { message: "At most 6 options are allowed" })
-  @MaxLength(ANSWER_OPTION_MAX_LENGTH, { each: true, message: `Each option must be at most ${ANSWER_OPTION_MAX_LENGTH} characters` })
+  @MaxLength(100, { each: true, message: `Each option must be at most 100 characters` })
   options: string[];
 
   @IsInt({ message: "Correct option index must be an integer" })
