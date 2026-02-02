@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/Input";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useUser } from "@/context/UserContext";
-import { USERNAME_MAX_LENGTH } from "@/lib/constants";
+
+const USERNAME_MAX_LENGTH = 20;
 
 export default function LoginPage() {
   const router = useRouter();
