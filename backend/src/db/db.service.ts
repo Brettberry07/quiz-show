@@ -10,7 +10,7 @@ export class DbService {
 		private readonly userRepository: Repository<User>,
 		// private readonly authService: AuthService, // Cannot use AuthService
 	) {}
-	// TODO: Remove findAll() method, replace require parameters
+
 	async findAll(): Promise<User[]> {
 		return await this.userRepository.find();
 	}
@@ -21,12 +21,8 @@ export class DbService {
 	}
 
 	async findOne(uuid?: string, username?: string): Promise<User | null> {
-		if (uuid) {
-			return await this.userRepository.findOne({ where: { id: uuid } });
-		}
-		if (username) {
-			return await this.userRepository.findOne({ where: { username } });
-		}
+		if (uuid) return await this.userRepository.findOne({ where: { id: uuid } });
+		if (username) return await this.userRepository.findOne({ where: { username } });
 		return null;
 	}
 
@@ -34,9 +30,7 @@ export class DbService {
 		const user = await this.userRepository.findOne({
 			where: { id: uuid },
 		});
-		if (!user) {
-			return undefined;
-		}
+		if (!user) return undefined;
 		await this.userRepository.remove(user);
 		return user;
 	}
