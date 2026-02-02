@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsEnum, IsNumber, Min, IsInt, ArrayMinSize, IsOptional, MaxLength, ArrayMaxSize } from "class-validator";
+import { IsString, IsNotEmpty, IsArray, ValidateNested, IsEnum, IsNumber, Min, Max, IsInt, ArrayMinSize, IsOptional, MaxLength, ArrayMaxSize } from "class-validator";
 import { Type } from "class-transformer";
 import { QuestionType } from "../../game/game.types";
 
