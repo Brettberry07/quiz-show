@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 
 import { DbService } from '../db/db.service';
-import { JwtService } from '../jwt/jwt.service';
+import { JwtPayload, JwtService } from '../jwt/jwt.service';
 
 import { LoginUserDto } from 'src/dto/loginUser.dto';
 import { User } from 'src/entities/user.entity';
@@ -100,10 +100,10 @@ export class AuthService {
 	 */
 	async refresh(refreshToken: string): Promise<{ message: string; accessToken: string; newRefreshToken: string; }> {
 		// Verify and decode the refresh token
-		let payload;
+		let payload: JwtPayload;
 		try {
 			payload = await this.jwtService.verifyAndDecode(refreshToken);
-		} catch (error) {
+		} catch {
 			throw new UnauthorizedException('Invalid refresh token');
 		}
 
