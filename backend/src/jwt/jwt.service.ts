@@ -29,7 +29,11 @@ export class JwtService {
 
   // ----- REFRESH TOKEN -----
   generateRefreshToken(payload: JwtPayload): Promise<string> {
-    return this.jwtService.signAsync(payload)
+    return this.jwtService.signAsync(payload, {
+      secret: this.configService.get<string>("JWT_SECRET"),
+      algorithm: "HS256",
+      expiresIn: this.configService.get<string>("JWT_REFRESH_EXP", "7d") as any,
+    });
   }
 
   // Hash refresh tokens before storing in DB
