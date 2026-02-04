@@ -281,7 +281,7 @@ function HostGamePage() {
         </AnimatePresence>
 
         {/* Timer - Only active in 'answering' state */}
-        <div className="absolute left-8 bottom-8 md:scale-125 origin-bottom-left">
+        <div className="absolute left-8 top-8 md:scale-125 origin-bottom-left">
               {isQuestionActive && (
                  <motion.div 
                     initial={{ scale: 0 }} 
