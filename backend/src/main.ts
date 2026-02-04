@@ -12,7 +12,7 @@ async function bootstrap() {
 		origin: [
 			'https://quizsink.duckdns.org',
 			'https://quiz-show-chi.vercel.app',
-			'http://localhost:3000',
+			'http://localhost:8080',
 		],
 		credentials: true, // Allow credentials (cookies, authorization headers)
 		methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
