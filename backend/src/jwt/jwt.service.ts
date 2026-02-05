@@ -1,5 +1,4 @@
 // You can ignore these, eslint has a seizure when it sees good code (brcrypt types are incorrectly defined)
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
@@ -20,18 +19,16 @@ export class JwtService {
 
   // ----- ACCESS TOKEN -----
   generateAccessToken(payload: JwtPayload): Promise<string> {
-    return this.jwtService.signAsync(payload, {
-      secret: this.configService.get<string>("JWT_SECRET"), // Use symmetric secret
-      algorithm: "HS256",
-      expiresIn: this.configService.get<string>("JWT_ACCESS_EXP", "15m") as any,
-    });
+    return this.jwtService.signAsync(payload);
   }
 
   // ----- REFRESH TOKEN -----
+  // Overrides default to have longer expiry
   generateRefreshToken(payload: JwtPayload): Promise<string> {
     return this.jwtService.signAsync(payload, {
       secret: this.configService.get<string>("JWT_SECRET"),
       algorithm: "HS256",
+      // Required to cast as any because TS can't decouple string and number types here
       expiresIn: this.configService.get<string>("JWT_REFRESH_EXP", "7d") as any,
     });
   }
@@ -46,6 +43,7 @@ export class JwtService {
     }
   }
 
+  // ----- VALIDATION -----
   compareToken(token: string, hash: string): Promise<boolean> {
     try {
       return bcrypt.compare(token, hash) as Promise<boolean>;
@@ -54,7 +52,6 @@ export class JwtService {
     }
   }
 
-  // ----- VALIDATION -----
   async verifyToken(token: string): Promise<boolean> {
     return this.jwtService.verifyAsync<JwtPayload>(token).then(() => true).catch(() => false);
   }
