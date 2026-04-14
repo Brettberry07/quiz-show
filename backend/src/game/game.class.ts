@@ -65,7 +65,7 @@ export class Game {
 	 * Add a player to the game
 	 */
 	addPlayer(userId: string, nickname: string, socketId: string): PlayerState {
-		if (this.state !== GameState.LOBBY) throw new BadRequestException('Game has already started');
+		if (this.state === GameState.ENDED) throw new BadRequestException('Game has already ended');
 
 		if (this.players.has(userId)) throw new BadRequestException('You are already in this game');
 

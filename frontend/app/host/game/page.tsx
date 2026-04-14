@@ -212,12 +212,19 @@ function HostGamePage() {
                     <span className="text-xs font-bold uppercase tracking-widest text-white/70">Question {currentQuestionIndex + 1} of {totalQuestions}</span>
                 </div>
                     
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-6">
+                    <div className="flex flex-col items-end mr-2">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/50 leading-none mb-1">Join Code</span>
+                        <span className="text-3xl font-black tracking-tighter text-white leading-none">{pin}</span>
+                    </div>
+
+                    <div className="h-10 w-px bg-white/20 mx-2" />
+
                     <div className="bg-white/20 px-4 py-2 rounded-lg flex items-center gap-2">
                         <User className="w-5 h-5" />
-                      <span className="font-bold">{playerCount}</span>
+                      <span className="font-bold text-lg">{playerCount}</span>
                     </div>
-                    <button onClick={handleManualNext} className="ml-4 text-xs bg-white/10 px-2 py-1 rounded hover:bg-white/20">
+                    <button onClick={handleManualNext} className="ml-2 text-xs bg-white/10 px-2 py-1 rounded hover:bg-white/20">
                         Skip
                     </button>
                 </div>

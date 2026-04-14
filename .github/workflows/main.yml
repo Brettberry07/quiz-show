@@ -1,4 +1,4 @@
-name: Backend Docker CI/CD
+name: Docker CI/CD
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-and-push:
-    name: Build and Push Backend Docker Image
+    name: Build and Push Docker Images
     runs-on: ubuntu-latest
 
     steps:
@@ -37,5 +37,19 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/${{ steps.meta.outputs.REPO_NAME }}-backend:latest
             ${{ secrets.DOCKER_USERNAME }}/${{ steps.meta.outputs.REPO_NAME }}-backend:${{ steps.meta.outputs.SHORT_SHA }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend multi-arch production image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/${{ steps.meta.outputs.REPO_NAME }}-frontend:latest
+            ${{ secrets.DOCKER_USERNAME }}/${{ steps.meta.outputs.REPO_NAME }}-frontend:${{ steps.meta.outputs.SHORT_SHA }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

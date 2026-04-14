@@ -1,6 +1,6 @@
 # Backend System Design: Real-Time Classroom Quiz Game
 
-This document outlines the backend architecture for a real-time classroom quiz application. It is designed for **NestJS**, using **WebSockets (Socket.io)** for communication and **SQLite3** for persistence.
+This document outlines the backend architecture for a real-time classroom quiz application. It is designed for **NestJS**, using **WebSockets (Socket.io)** for communication and **better-sqlite3** for persistence.
 
 The architecture follows a **Server-Authoritative** model. The server holds the "Truth" of the game state, controls the clock, and calculates scores. Clients are "dumb" terminals that display state and send inputs.
 
@@ -231,7 +231,10 @@ We cannot trust the client's "Sent At" timestamp (easily spoofed).
 
 ## 9. Persistence Strategy
 
-### SQLite (File-based)
+### better-sqlite3 (File-based)
+
+* **Location**: In production, the database is stored at `/app/data/database.db`. This path must be mounted as a persistent volume.
+* **Engine**: We use `better-sqlite3` for its synchronous performance and reliability.
 
 * **Users**: Username only (trusted environment, no password required).
 * **Quizzes**: JSON blob for options structure to keep schema simple.
@@ -262,3 +265,23 @@ We cannot trust the client's "Sent At" timestamp (easily spoofed).
 * Team Mode.
 * Free text input questions (requires manual grading or fuzzy matching).
 * Rich media (Images/Video in questions).
+---
+
+## 11. Deployment & Containerization
+
+The application is fully containerized using a multi-stage Dockerfile.
+
+### Build tools
+To support the native compilation of `better-sqlite3` on Alpine Linux, the `builder` stage includes:
+- `python3`
+- `make`
+- `g++`
+
+### Environment Variables
+The following environment variables are used to configure the production instance:
+- `DATABASE_PATH`: Path to the SQLite database file (defaults to `/app/data/database.db`).
+- `PORT`: The port the backend listens on (defaults to `5200`).
+- `JWT_SECRET`: Secret key for signing and verifying JSON Web Tokens.
+
+### Health Checks
+The container includes a built-in health check that queries the root endpoint (`GET /`) to ensure the server is responsive.

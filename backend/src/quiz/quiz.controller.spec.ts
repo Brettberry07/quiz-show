@@ -3,7 +3,6 @@ import { QuizController } from './quiz.controller';
 import { QuizService } from './quiz.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { QuestionType } from '../game/game.types';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { QuizEntity } from '../entities/quiz.entity';
 import { QuestionEntity } from '../entities/question.entity';
 import { GameService } from '../game/game.service';
@@ -19,18 +18,17 @@ describe('QuizController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [
-        TypeOrmModule.forRoot({
-          type: 'sqlite',
-          database: ':memory:',
-          dropSchema: true,
-          entities: [QuizEntity, QuestionEntity],
-          synchronize: true,
-        }),
-        TypeOrmModule.forFeature([QuizEntity, QuestionEntity]),
-      ],
+      imports: [],
       controllers: [QuizController],
       providers: [
+        QuizService,
+        {
+          provide: 'DATABASE_CONNECTION',
+          useValue: {
+            prepare: jest.fn().mockReturnValue({ run: jest.fn(), get: jest.fn(), all: jest.fn() }),
+            transaction: jest.fn((cb) => cb),
+          },
+        },
         QuizService,
         {
           provide: GameService,

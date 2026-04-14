@@ -98,21 +98,22 @@ function HostPage() {
                         </Link>
                     </div>
 
-                    <div className="flex flex-col items-center bg-black/20 px-8 py-2 rounded-xl backdrop-blur-sm border border-white/10">
-                        <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/70 mb-1">Game PIN</span>
-                        <div className="text-5xl font-black tracking-widest font-mono text-white drop-shadow-md">
-                            {pin ? `${pin.slice(0, 3)}-${pin.slice(3)}` : loading ? "......" : "------"}
+                    <div className="flex items-center gap-8 mt-4 md:mt-0">
+                         <div className="flex flex-col items-end bg-black/20 px-8 py-2 rounded-xl backdrop-blur-sm border border-white/10">
+                            <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/70 mb-1">Join Code</span>
+                            <div className="text-5xl font-black tracking-widest font-mono text-white drop-shadow-md">
+                                {pin ? `${pin.slice(0, 3)}-${pin.slice(3)}` : loading ? "......" : "------"}
+                            </div>
                         </div>
-                    </div>
-                     
-                    <div className="flex items-center gap-2 mt-4 md:mt-0 opacity-0 md:opacity-100">
-                        {/* Spacer or Settings */}
-                         <Button variant="ghost" className="text-white hover:bg-white/10 h-10 w-10 p-0">
-                            <Settings className="w-6 h-6" />
-                         </Button>
-                         <Button variant="ghost" className="text-white hover:bg-white/10 h-10 w-10 p-0">
-                            <Music className="w-6 h-6" />
-                         </Button>
+
+                        <div className="flex items-center gap-2 opacity-0 md:opacity-100">
+                             <Button variant="ghost" className="text-white hover:bg-white/10 h-10 w-10 p-0">
+                                <Settings className="w-6 h-6" />
+                             </Button>
+                             <Button variant="ghost" className="text-white hover:bg-white/10 h-10 w-10 p-0">
+                                <Music className="w-6 h-6" />
+                             </Button>
+                        </div>
                     </div>
                 </div>
             </div>

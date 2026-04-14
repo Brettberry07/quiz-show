@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  backend:
+    container_name: quizshow-backend-dev
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "5200:5200"
+    environment:
+      - NODE_ENV=development
+      - PORT=5200
+      - DATABASE_PATH=/app/data/database.db
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/data:/app/data
+      - /app/node_modules
+    networks:
+      - quizshow-network
+    restart: unless-stopped
+
+  frontend:
+    container_name: quizshow-frontend-dev
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:5200
+    volumes:
+      - ./frontend/app:/app/app
+      - ./frontend/components:/app/components
+      - ./frontend/context:/app/context
+      - ./frontend/lib:/app/lib
+      - ./frontend/public:/app/public
+      - /app/node_modules
+    networks:
+      - quizshow-network
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+networks:
+  quizshow-network:
+    driver: bridge
+    name: quizshow-network

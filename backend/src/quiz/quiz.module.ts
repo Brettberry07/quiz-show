@@ -1,17 +1,15 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { QuizService } from './quiz.service';
 import { QuizController } from './quiz.controller';
 import { AuthModule } from 'src/auth/auth.module';
 import { GameModule } from 'src/game/game.module';
-import { QuizEntity } from '../entities/quiz.entity';
-import { QuestionEntity } from '../entities/question.entity';
+import { DbModule } from 'src/db/db.module';
 
 @Module({
     imports: [
         AuthModule,
         forwardRef(() => GameModule), // Forward reference to avoid circular dependency
-        TypeOrmModule.forFeature([QuizEntity, QuestionEntity]),
+        DbModule,
     ],
     controllers: [QuizController],
     providers: [QuizService],

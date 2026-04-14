@@ -8,8 +8,8 @@ FROM node:20-alpine AS base
 # Set working directory
 WORKDIR /app
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Install build dependencies and dumb-init
+RUN apk add --no-cache dumb-init python3 make g++
 
 # Copy package files
 COPY package*.json ./

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backend:
+    container_name: quizshow-backend-prod
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    environment:
+      - NODE_ENV=production
+      - PORT=5200
+      - DATABASE_PATH=/app/data/database.db
+    volumes:
+      - ./backend/data:/app/data
+    restart: always
+
+  frontend:
+    container_name: quizshow-frontend-prod
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+    environment:
+      - NODE_ENV=production
+    restart: always
+    depends_on:
+      - backend
+
+networks:
+  quizshow-network:
+    driver: bridge
+    name: quizshow-network

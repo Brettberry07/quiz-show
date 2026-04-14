@@ -130,7 +130,7 @@ function LeaderboardPage() {
       }}
     >
       {/* Header */}
-      <header className="w-full h-16 bg-[#3D3030] flex items-center justify-between px-6 shadow-md z-10 shrink-0">
+      <header className="w-full h-20 bg-[#3D3030] flex items-center justify-between px-6 shadow-md z-10 shrink-0">
         <div className="flex items-center gap-3 text-white">
           <Link href="/home">
             <img src="/text.svg" alt="QuizSink Logo" className="w-36 h-36" />
@@ -141,8 +141,9 @@ function LeaderboardPage() {
             After Question {currentQuestionIndex + 1} of {totalQuestions}
           </span>
         </div>
-        <div className="flex items-center gap-3 text-white opacity-0">
-          <span className="text-xl font-medium">Spacer</span>
+        <div className="flex flex-col items-end text-white">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white/50 leading-none mb-1">Join Code</span>
+            <span className="text-3xl font-black tracking-tighter text-white leading-none">{pin}</span>
         </div>
       </header>
 
