@@ -20,7 +20,7 @@ COPY package*.json ./
 FROM base AS development
 
 # Install all dependencies (including devDependencies)
-RUN npm ci
+RUN npm i
 
 # Copy source code
 COPY . .
@@ -37,16 +37,13 @@ CMD ["dumb-init", "npm", "run", "start:dev"]
 FROM base AS builder
 
 # Install all dependencies (needed for build)
-RUN npm ci
+RUN npm i
 
 # Copy source code
 COPY . .
 
 # Build the application
 RUN npm run build
-
-# Prune dev dependencies
-RUN npm prune --production
 
 # ============================================
 # Production Stage
